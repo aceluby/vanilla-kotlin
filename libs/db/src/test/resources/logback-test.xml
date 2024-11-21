@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%-12.12d{HH:mm:ss.SS} %highlight(%-5level) [%thread] %logger{15} %kvp{NONE} %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="info">
+    <appender-ref ref="STDOUT"/>
+  </root>
+  <logger name="vanillakotlin" level="debug"/>
+</configuration>

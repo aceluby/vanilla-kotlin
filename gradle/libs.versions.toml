@@ -1,0 +1,144 @@
+[versions]
+flyway = "10.11.0"
+guava = "33.1.0-jre"
+hoplite = "2.7.5"
+hoplite-config-loader = "1.7.0"
+http4k = "5.14.4.0"
+jackson = "2.17.0"
+jupiter = "5.10.2"
+kasechange = "1.4.1"
+kotest = "5.8.1"
+kotlin-core = "2.0.0"
+kotlin-coroutines = "1.8.0"
+lite-for-jdbc = "2.4.0"
+mockk = "1.13.10"
+okhttp = "4.12.0"
+postgresql = "42.7.3"
+resilience4j = "2.2.0"
+spotless = "6.25.0"
+otel = "1.44.1"
+slf4j = "2.0.6"
+logback = "1.4.14"
+logback-encoder = "7.2"
+kafka = "3.9.0"
+
+[libraries]
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+
+hoplite-config-loader = { module = "toolshed:hoplite-config-loader", version.ref = "hoplite-config-loader" }
+hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
+hoplite-hocon = { module = "com.sksamuel.hoplite:hoplite-hocon", version.ref = "hoplite" }
+
+http4k-contract = { module = "org.http4k:http4k-contract", version.ref = "http4k" }
+http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4k" }
+http4k-format-jackson = { module = "org.http4k:http4k-format-jackson", version.ref = "http4k" }
+http4k-micrometer = { module = "org.http4k:http4k-metrics-micrometer", version.ref = "http4k" }
+http4k-server-undertow = { module = "org.http4k:http4k-server-undertow", version.ref = "http4k" }
+
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+
+jdbc-lite = { module = "com.target:lite-for-jdbc", version.ref = "lite-for-jdbc" }
+
+jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "jupiter" }
+jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "jupiter" }
+jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "jupiter" }
+
+kasechange = { module = "net.pearx.kasechange:kasechange", version.ref = "kasechange" }
+
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-assertions-json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
+kotest-extensions = { module = "io.kotest:kotest-extensions", version.ref = "kotest" }
+kotest-framework = { module = "io.kotest:kotest-framework-api-jvm", version.ref = "kotest" }
+kotest-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
+kotest-runner-jvm = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
+
+kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
+
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-mock-server = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
+
+resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
+resilience4j-timelimiter = { module = "io.github.resilience4j:resilience4j-timelimiter", version.ref = "resilience4j" }
+resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
+
+otel-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "otel" }
+otel-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version.ref = "otel" }
+otel-autoconfigure = { module = "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure", version.ref = "otel" }
+otel-logging = { module = "io.opentelemetry:opentelemetry-exporter-logging", version.ref = "otel" }
+otel-logging-otlp = { module = "io.opentelemetry:opentelemetry-exporter-logging-otlp", version.ref = "otel" }
+otel-sdk-metrics = { module = "io.opentelemetry:opentelemetry-sdk-metrics", version.ref = "otel" }
+otel-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testing", version.ref = "otel" }
+
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logback-encoder" }
+
+kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+
+[bundles]
+hoplite = [
+    "hoplite-core",
+    "hoplite-hocon"
+]
+
+testing = [
+    "jupiter-api",
+    "jupiter-engine",
+    "jupiter-params",
+    "kotest-assertions-core",
+    "kotest-junit5",
+    "kotest-property",
+    "kotest-assertions-json",
+    "kotest-extensions",
+    "mockk"
+]
+
+jackson = [
+    "jackson-kotlin",
+    "jackson-jdk8",
+    "jackson-jsr310",
+    "jackson-databind"
+]
+
+http4k = [
+    "http4k-core",
+    "http4k-format-jackson",
+    "http4k-contract",
+    "http4k-micrometer",
+    "http4k-server-undertow"
+]
+
+resilience4j = [
+    "resilience4j-kotlin",
+    "resilience4j-timelimiter"
+]
+
+otel = ["otel-api"]
+
+otel-testing = [
+    "otel-sdk",
+    "otel-autoconfigure",
+    "otel-logging",
+    "otel-logging-otlp",
+    "otel-sdk-metrics",
+    "otel-sdk-testing"
+]
+
+logging = [
+    "logback-classic",
+    "logback-encoder",
+    "slf4j"
+]
+
+[plugins]
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
