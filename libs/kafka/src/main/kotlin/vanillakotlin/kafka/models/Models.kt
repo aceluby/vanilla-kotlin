@@ -2,6 +2,9 @@ package vanillakotlin.kafka.models
 
 import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
+import vanillakotlin.kafka.provenance.Provenance
+import vanillakotlin.kafka.provenance.SPAN_ID_HEADER_NAME
+import java.time.Instant
 
 typealias Partition = Int
 typealias Offset = Long
@@ -26,7 +29,13 @@ data class KafkaMessage(
     val timestamp: Long,
     val body: ByteArray?,
     val endOfBatch: Boolean = false,
-)
+) {
+    fun buildProvenance(): Provenance = Provenance(
+        spanId = headers[SPAN_ID_HEADER_NAME]?.let { String(it) },
+        timestamp = Instant.ofEpochMilli(timestamp),
+        entity = "kafka://${broker.replace(Regex("(:9092|:9093)"), "")}/$topic/$partition/$offset",
+    )
+}
 
 data class KafkaOutputMessage<V>(
     val key: String?,

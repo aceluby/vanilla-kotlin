@@ -4,7 +4,7 @@ package vanillakotlin.bulkinserter
 class App : ReferenceApp {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    private val config = loadTargetDefaultConfig<Config>("conf")
+    private val config = loadConfig<Config>()
 
     private val metricsPublisher = OtelMetricsPublisher(config.metrics)
 

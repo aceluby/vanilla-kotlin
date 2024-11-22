@@ -1,13 +1,18 @@
 package vanillakotlin.api
 
+import com.target.liteforjdbc.DbConfig
+import vanillakotlin.http.clients.ConnectionConfig
 import vanillakotlin.http.clients.item.ItemGateway
+import vanillakotlin.http.interceptors.RetryInterceptor
+import vanillakotlin.http4k.CorsMode
+import vanillakotlin.metrics.OtelMetrics
 
 // This file includes the data classes needed to define the configuration for the app.
 // see docs/configuration.md for more details
 
 data class Config(
     val http: HttpConfig,
-    val metrics: OtelMetricsPublisher.Config,
+    val metrics: OtelMetrics.Config,
     val db: DbConfig,
 ) {
     data class HttpConfig(
@@ -26,7 +31,6 @@ data class Config(
                 val gateway: ItemGateway.Config,
                 val connection: ConnectionConfig,
                 val retry: RetryInterceptor.Config,
-                val cache: CachingInterceptor.Config,
             )
         }
     }

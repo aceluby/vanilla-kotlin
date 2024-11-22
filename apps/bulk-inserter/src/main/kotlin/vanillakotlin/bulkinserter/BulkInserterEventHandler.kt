@@ -22,11 +22,11 @@ class BulkInserterEventHandler(
 
         // A null body means the user favorite was deleted, so we'll create a new UserFavoriteTcin with isDeleted = true to indicate to the
         // batch processor that it should delete that record
-        val (username, tcin) = UserFavoriteTcin.parseKey(kafkaMessage.key)
+        val (username, item) = UserFavoriteTcin.parseKey(kafkaMessage.key)
         val outputBody =
             kafkaMessage.body?.let { body -> mapper.readValue<UserFavoriteTcin>(body) } ?: UserFavoriteTcin(
                 userName = username,
-                tcin = tcin,
+                item = item,
                 isDeleted = true,
             )
 

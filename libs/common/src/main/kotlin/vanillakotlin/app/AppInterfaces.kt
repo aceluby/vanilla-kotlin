@@ -1,15 +1,16 @@
 package vanillakotlin.app
 
 import org.slf4j.LoggerFactory
+import vanillakotlin.extensions.eventually
 
 private val log = LoggerFactory.getLogger("ReferenceApp")
 
-interface ReferenceApp : AutoCloseable {
+interface VanillaApp : AutoCloseable {
     fun start()
 }
 
 // helper function to start an application and add a shutdown hook to gracefully close it
-fun runApplication(block: () -> ReferenceApp) =
+fun runApplication(block: () -> VanillaApp) =
     block().use { app ->
         log.atInfo().log { "adding shutdown hook to the application" }
         Runtime.getRuntime().addShutdownHook(

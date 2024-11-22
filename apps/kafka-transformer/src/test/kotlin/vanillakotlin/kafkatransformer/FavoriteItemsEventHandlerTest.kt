@@ -13,10 +13,10 @@ class FavoriteItemsEventHandlerTest {
 
     @Test fun `a populated message should be enriched and forwarded`() {
         val userName = randomUsername()
-        val tcin = randomTcin()
-        val item = buildTestItem(itemIdentifier = tcin)
-        val kafkaMessage = buildTestMessage(username = userName, itemIdentifier = tcin)
-        val kafkaMesageKey = "$userName:$tcin"
+        val item = randomTcin()
+        val item = buildTestItem(itemIdentifier = item)
+        val kafkaMessage = buildTestMessage(username = userName, itemIdentifier = item)
+        val kafkaMesageKey = "$userName:$item"
 
         val handler =
             FavoriteItemsEventHandler(
@@ -37,9 +37,9 @@ class FavoriteItemsEventHandlerTest {
         // The message key and any headers would still be populated, but the body would be null.
 
         val userName = randomUsername()
-        val tcin = randomTcin()
-        val kafkaMessage = buildTestMessage(username = userName, itemIdentifier = tcin).copy(body = null)
-        val kafkaMesageKey = "$userName:$tcin"
+        val item = randomTcin()
+        val kafkaMessage = buildTestMessage(username = userName, itemIdentifier = item).copy(body = null)
+        val kafkaMesageKey = "$userName:$item"
 
         val handler =
             FavoriteItemsEventHandler(

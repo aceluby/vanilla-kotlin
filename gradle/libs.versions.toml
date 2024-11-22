@@ -21,6 +21,7 @@ slf4j = "2.0.6"
 logback = "1.4.14"
 logback-encoder = "7.2"
 kafka = "3.9.0"
+rocksdb = "8.11.4"
 
 [libraries]
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
@@ -84,6 +85,8 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logback-encoder" }
 
 kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+
+rocksdb = { module = "org.rocksdb:rocksdbjni", version.ref = "rocksdb" }
 
 [bundles]
 hoplite = [

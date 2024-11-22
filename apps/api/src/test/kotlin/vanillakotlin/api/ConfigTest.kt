@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 class ConfigTest {
 
     @Test fun `default config`() {
-        val config = loadTargetDefaultConfig<Config>("conf")
+        val config = loadConfig<Config>()
         config.metrics.tags["team"] shouldBe "reference" // default value in the MetricsPublisher.Config class
     }
 
@@ -21,7 +21,7 @@ class ConfigTest {
         // 2. it doesn't do any case translation. this prevents problems around naming convention translation.
         // see the hoplite docs for more details
         withSystemProperty("config.override.db.host", expectedValue) {
-            val config = loadTargetDefaultConfig<Config>("conf")
+            val config = loadConfig<Config>()
             config.db.host shouldBe expectedValue
         }
     }
@@ -29,7 +29,7 @@ class ConfigTest {
     @Test fun `environment property config override`() {
         val expectedValue = randomString()
         withEnvironment("config.override.db.host", expectedValue) {
-            val config = loadTargetDefaultConfig<Config>("conf")
+            val config = loadConfig<Config>()
             config.db.host shouldBe expectedValue
         }
     }

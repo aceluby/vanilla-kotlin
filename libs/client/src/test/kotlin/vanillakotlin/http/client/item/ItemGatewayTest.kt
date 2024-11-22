@@ -26,7 +26,7 @@ class ItemGatewayTest {
              {
               "data": {
                 "item": {
-                  "tcin": "$expectedTcin",
+                  "item": "$expectedTcin",
                   "lifecycleState": "$expectedLifecyeState",
                   "classification": {
                     "merchandise": {
@@ -98,7 +98,7 @@ class ItemGatewayTest {
              {
               "data": {
                 "item": {
-                  "tcin": "1",
+                  "item": "1",
                   "lifecycleState": "DELETED",
                   "classification": {
                     "merchandise": null

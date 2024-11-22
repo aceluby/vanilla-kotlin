@@ -26,7 +26,7 @@ class FavoriteItemsEventHandler(
         val outputBody =
             kafkaMessage.body?.let { body ->
                 val userFavoriteTcin = mapper.readValue<UserFavoriteTcin>(body)
-                getItemDetails(userFavoriteTcin.tcin)?.let { item: Item ->
+                getItemDetails(userFavoriteTcin.item)?.let { item: Item ->
                     UserFavoriteItem(userName = userFavoriteTcin.userName, item = item)
                 }
             }

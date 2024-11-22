@@ -60,7 +60,7 @@ class FavoriteItemsServiceTest {
         every {
             mockUserFavoriteTcinRepository.deleteByUserNameAndTcin(
                 userName = TEST_USER,
-                tcin = testFavorites[0].itemIdentifier,
+                item = testFavorites[0].itemIdentifier,
             )
         }.answers { 1 }
 
@@ -72,7 +72,7 @@ class FavoriteItemsServiceTest {
         verifyAll {
             mockUserFavoriteTcinRepository.deleteByUserNameAndTcin(
                 userName = TEST_USER,
-                tcin = testFavorites[0].itemIdentifier,
+                item = testFavorites[0].itemIdentifier,
             )
         }
     }
@@ -125,7 +125,7 @@ class FavoriteItemsServiceTest {
 
         every { mockUserFavoriteTcinRepository.findByUserName(TEST_USER) }.answers { testFavorites }
 
-        val items = service.getFavoriteTcins(TEST_USER)
+        val items = service.getFavoriteItems(TEST_USER)
 
         items.size shouldBe testTcins.size
         items shouldContainAll testTcins

@@ -7,9 +7,10 @@ plugins {
 // additions will be added to all applications.
 dependencies {
     api(libs.bundles.jackson)
-    api(libs.hoplite.hocon)
+    api(libs.bundles.hoplite)
     api(libs.bundles.resilience4j)
     api(libs.bundles.logging)
+    api(libs.kotlin.coroutines)
 
     // this is another set of opinionated defaults you should use if you don't already have a strong preference
     // it runs tests using the JUnit runner, and adds the kotest assertions library for better assertions

@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -19,7 +20,8 @@ import vanillakotlin.models.HealthMonitor
 import java.lang.Thread.sleep
 import java.time.Duration
 import java.util.Properties
-import kotlin.concurrent.thread
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 
 private val log = LoggerFactory.getLogger(vanillakotlin.kafka.consumer.KafkaConsumer::class.java.name)
@@ -38,6 +40,7 @@ class KafkaConsumer(
         val maxPollRecords: Int = 500,
         val autoOffsetResetConfig: String,
         val maxCommitErrors: Int = 10,
+        val autoCommitOffsets: Boolean = true,
         val driverProperties: Map<String, String>? = emptyMap(),
         val partitions: Set<Partition> = emptySet(),
         val skipErrors: SkipErrorsConfig = SkipErrorsConfig(),
@@ -55,6 +58,8 @@ class KafkaConsumer(
     private val stopCompleted = CompletableDeferred<Unit>()
     private val _assignment: MutableSet<TopicPartition> = mutableSetOf()
 
+    val offsets = ConcurrentHashMap<TopicPartition, OffsetAndMetadata>()
+
     /**
      * non-mutable public references to internal values
      */
@@ -68,14 +73,9 @@ class KafkaConsumer(
         isHealthy = _assignment.isNotEmpty(),
         details = "kafka consumer connection to ${config.topics}",
     )
-
-    // run as a daemon thread by default, but allow non-daemon usage for testing
-    fun start(runAsDaemon: Boolean = true) {
-        if (runAsDaemon) {
-            thread(isDaemon = true, name = "kafkaConsumer") { runConsumer() }
-        } else {
-            runConsumer()
-        }
+    val consumerThread = Executors.newSingleThreadExecutor()
+    fun start() {
+        consumerThread.execute { runConsumer() }
     }
 
     fun stop() = runBlocking {
@@ -83,9 +83,43 @@ class KafkaConsumer(
         stopCompleted.await()
     }
 
+    fun commitOffsets() {
+        val nextMessageOffsetsToCommit = synchronized(offsets) {
+            offsets
+                .toMap()
+                .mapValues { (_, offset) ->
+                    OffsetAndMetadata(offset.offset() + 1, offset.leaderEpoch(), offset.metadata())
+                }
+                .also { offsets.clear() }
+        }
+        _consumer.commitAsync(nextMessageOffsetsToCommit, offsetCommitErrorHandler)
+    }
+
     private fun runConsumer() {
         // initialize the consumer based on the configuration
-        initializeConsumer()
+        val producerProperties = Properties().apply {
+            put(ConsumerConfig.GROUP_ID_CONFIG, config.group)
+            put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, config.broker)
+            put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer().javaClass)
+            put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer().javaClass)
+            put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, config.maxPollRecords)
+            put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false)
+            put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, config.autoOffsetResetConfig)
+            // otherwise allow full customization of the properties for things like cert-based SSL or other tuning
+            config.driverProperties?.entries?.forEach {
+                this[it.key] = it.value
+            }
+        }
+        _consumer = KafkaConsumer(producerProperties)
+        if (config.partitions.isNotEmpty()) {
+            _consumer.assign(
+                config.topics.flatMap { topic ->
+                    config.partitions.map { TopicPartition(topic, it) }
+                },
+            )
+        } else {
+            _consumer.subscribe(config.topics, rebalanceListener)
+        }
         _consumer.use { consumer ->
             while (true) {
                 val records: ConsumerRecords<String, ByteArray> = consumer.poll(Duration.ofMillis(config.pollTimeoutMs))
@@ -108,19 +142,10 @@ class KafkaConsumer(
                         },
                     )
                 } catch (throwable: Throwable) {
-                    uncaughtErrorHandler(KafkaError(throwable, kafkaMessage, records, config.skipErrors))
+                    uncaughtErrorHandler(KafkaError(throwable, kafkaMessage, config.skipErrors))
                 }
 
-                consumer.takeIf { batchCount > 0 }?.commitAsync { _, exception ->
-                    // if too many consecutive errors occur committing, shut down and let the container restart it
-                    if (exception != null) commitErrorCount++ else commitErrorCount = 0
-                    if (commitErrorCount > config.maxCommitErrors) {
-                        log.atError().setCause(exception).log("Too many consecutive errors occurred committing offsets; will shut down")
-                        // briefly wait to ensure the log message is flushed before halting. this can happen with Spring Boot usage.
-                        sleep(100)
-                        Runtime.getRuntime().halt(1)
-                    }
-                }
+                consumer.takeIf { config.autoCommitOffsets && batchCount > 0 }?.commitAsync(offsetCommitErrorHandler)
 
                 if (stopRequested) {
                     stopCompleted.complete(Unit)
@@ -130,34 +155,16 @@ class KafkaConsumer(
         }
     }
 
-    fun initializeConsumer() {
-        _consumer = KafkaConsumer(getConsumerProperties(config))
-        if (config.partitions.isNotEmpty()) {
-            _consumer.assign(
-                config.topics.flatMap { topic ->
-                    config.partitions.map { TopicPartition(topic, it) }
-                },
-            )
-        } else {
-            _consumer.subscribe(config.topics, rebalanceListener)
-        }
-    }
-
-    private fun getConsumerProperties(config: Config): Properties = Properties().apply {
-        this[ConsumerConfig.GROUP_ID_CONFIG] = config.group
-        this[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = config.broker
-        this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer().javaClass
-        this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = ByteArrayDeserializer().javaClass
-        this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = config.maxPollRecords
-        this[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
-        this[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = config.autoOffsetResetConfig
-
-        // otherwise allow full customization of the properties for things like cert-based SSL or other tuning
-        config.driverProperties?.entries?.forEach {
-            this[it.key] = it.value
+    private val offsetCommitErrorHandler = { _: Map<TopicPartition, OffsetAndMetadata>, exception: Exception ->
+        // if too many consecutive errors occur committing, shut down and let the container restart it
+        if (exception != null) commitErrorCount++ else commitErrorCount = 0
+        if (commitErrorCount > config.maxCommitErrors) {
+            log.atError().setCause(exception).log("Too many consecutive errors occurred committing offsets; will shut down")
+            // briefly wait to ensure the log message is flushed before halting. this can happen with Spring Boot usage.
+            sleep(100)
+            Runtime.getRuntime().halt(1)
         }
 
-        return this
     }
 
     private val rebalanceListener =
@@ -182,7 +189,6 @@ class KafkaConsumer(
 data class KafkaError(
     val throwable: Throwable,
     val kafkaMessage: KafkaMessage?,
-    val batch: ConsumerRecords<String, ByteArray>,
     val skipErrorsConfig: vanillakotlin.kafka.consumer.KafkaConsumer.SkipErrorsConfig,
 )
 typealias ErrorHandler = (KafkaError) -> Unit

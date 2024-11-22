@@ -9,5 +9,4 @@ dependencies {
     implementation(libs.kotlin.coroutines)
 
     testImplementation(testFixtures(project(":libs:common")))
-    testImplementation(libs.bundles.otel.testing)
 }

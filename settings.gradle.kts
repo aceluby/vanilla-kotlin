@@ -5,6 +5,8 @@ include(
     "libs:client",
     "libs:metrics",
     "libs:kafka",
+    "libs:rocksdb",
+    "libs:http4k",
     "apps",
     "apps:api",
     "apps:bulk-inserter",

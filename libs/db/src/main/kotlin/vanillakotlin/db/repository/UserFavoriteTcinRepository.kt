@@ -1,69 +1,74 @@
 package vanillakotlin.db.repository
 
+import com.target.liteforjdbc.Db
+import com.target.liteforjdbc.getInstant
+import com.target.liteforjdbc.propertiesToMap
+import com.target.liteforjdbc.setParameters
 import org.intellij.lang.annotations.Language
+import vanillakotlin.models.FavoriteItem
+import vanillakotlin.models.UserName
+import vanillakotlin.models.buildDeletedOutbox
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
-typealias AddToBatch = (UserFavoriteTcin) -> Unit
+typealias AddToBatch = (FavoriteItem) -> Unit
 typealias RunBatch = () -> Int
 
-class UserFavoriteTcinRepository(private val db: Db) {
-    fun upsert(favorite: UserFavoriteTcin): UserFavoriteTcin {
+class FavoriteItemRepository(private val db: Db) {
+    fun upsert(favorite: FavoriteItem): FavoriteItem {
         return db.withTransaction { tx ->
-            val userFavoriteTcin =
+            val FavoriteItem =
                 checkNotNull(
                     tx.executeQuery(
                         sql =
                         """
-                            INSERT INTO user_favorite_tcin (user_name, tcin)
-                              VALUES (:userName, :tcin)
-                            ON CONFLICT ON CONSTRAINT unique_user_tcin DO UPDATE 
+                            INSERT INTO user_favorite_item (user_name, item)
+                              VALUES (:userName, :item)
+                            ON CONFLICT ON CONSTRAINT unique_user_item DO UPDATE 
                               SET updated_ts = CURRENT_TIMESTAMP
                             RETURNING *
                             """.trimIndent(),
                         args = favorite.propertiesToMap(),
-                        rowMapper = ::mapToUserFavoriteTcin,
+                        rowMapper = ::mapToFavoriteItem,
                     ),
                 ) { "Unexpected state: Insert didn't return a result." }
 
-            insertOutbox(tx, userFavoriteTcin.buildOutbox())
+            insertOutbox(tx, FavoriteItem.buildOutbox())
 
-            userFavoriteTcin
+            FavoriteItem
         }
     }
 
-    fun deleteByUserNameAndTcin(
-        userName: UserName,
-        tcin: Tcin,
+    fun deleteItem(
+        item: String,
     ): Int {
         return db.withTransaction { tx ->
             val rowCount =
                 tx.executeUpdate(
-                    sql = "DELETE FROM user_favorite_tcin WHERE user_name = :userName AND tcin = :tcin",
-                    args = mapOf("userName" to userName, "tcin" to tcin),
+                    sql = "DELETE FROM user_favorite_item WHERE item = :item",
+                    args = mapOf("item" to item),
                 )
 
             if (rowCount > 0) {
-                insertOutbox(tx, buildDeletedOutbox(userName, tcin))
+                insertOutbox(tx, buildDeletedOutbox(item))
             }
 
             rowCount
         }
     }
 
-    fun findByUserName(userName: UserName): List<UserFavoriteTcin> =
+    fun findAll(): List<FavoriteItem> =
         db.findAll(
-            sql = "SELECT * FROM user_favorite_tcin WHERE user_name = :userName",
-            args = mapOf("userName" to userName),
-            rowMapper = ::mapToUserFavoriteTcin,
+            sql = "SELECT * FROM favorite_Item",
+            rowMapper = ::mapToFavoriteItem,
         )
 
     // The batch here is just a list because we don't need to worry about concurrency in this case - once the consumer has consumed an
     // entire batch of records, the thread will wait until the running of the batch has been completed. If we were to run this in an
     // environment where concurrency was an issue, we would need to use a thread-safe data structure or synchronize access to the batch.
-    private val batch = mutableListOf<UserFavoriteTcin>()
+    private val batch = mutableListOf<FavoriteItem>()
 
-    fun addToBatch(userFavoriteTcin: UserFavoriteTcin) = batch.add(userFavoriteTcin)
+    fun addToBatch(FavoriteItem: FavoriteItem) = batch.add(FavoriteItem)
 
     // This function will run two batch statements. The first will batch update the table with the updated timestamp, then it will see if
     // the entire batch was updates, and if not, will run a batch insert, doing nothing when there are conflicts. The reason this pattern is
@@ -77,22 +82,22 @@ class UserFavoriteTcinRepository(private val db: Db) {
         takeIf { batch.isNotEmpty() }?.run {
             @Language("SQL") val updateQuery =
                 """
-                UPDATE user_favorite_tcin 
+                UPDATE user_favorite_item 
                 SET updated_ts = CURRENT_TIMESTAMP 
-                WHERE user_name = ? AND tcin = ?
+                WHERE user_name = ? AND item = ?
                 """.trimIndent()
 
             @Language("SQL") val insertQuery =
                 """
-                INSERT INTO user_favorite_tcin (user_name, tcin) 
+                INSERT INTO user_favorite_item (user_name, item) 
                 VALUES (?, ?) 
-                ON CONFLICT ON CONSTRAINT unique_user_tcin DO NOTHING
+                ON CONFLICT ON CONSTRAINT unique_user_item DO NOTHING
                 """.trimIndent()
 
             @Language("SQL") val deleteQuery =
                 """
-                DELETE FROM user_favorite_tcin 
-                WHERE user_name = ? AND tcin = ?
+                DELETE FROM user_favorite_item 
+                WHERE user_name = ? AND item = ?
                 """.trimIndent()
 
             // We're going to create 3 prepared statements here, one for each query. We're going to use the same connection for all of them.
@@ -105,13 +110,13 @@ class UserFavoriteTcinRepository(private val db: Db) {
                 update.useWithRollback { updateStatement ->
                     insert.useWithRollback { insertStatement ->
                         delete.useWithRollback { deleteStatement ->
-                            batch.forEach { userFavoriteTcin ->
-                                with(userFavoriteTcin) {
+                            batch.forEach { FavoriteItem ->
+                                with(FavoriteItem) {
                                     if (isDeleted) {
-                                        with(deleteStatement) { setParameters(userName, tcin).also { addBatch() } }
+                                        with(deleteStatement) { setParameters(itemIdentifier).also { addBatch() } }
                                     } else {
-                                        with(updateStatement) { setParameters(userName, tcin).also { addBatch() } }
-                                        with(insertStatement) { setParameters(userName, tcin).also { addBatch() } }
+                                        with(updateStatement) { setParameters(itemIdentifier).also { addBatch() } }
+                                        with(insertStatement) { setParameters(itemIdentifier).also { addBatch() } }
                                     }
                                 }
                                 val batchUpdateResults = updateStatement.executeBatch()
@@ -137,12 +142,11 @@ class UserFavoriteTcinRepository(private val db: Db) {
         }
 }
 
-private fun mapToUserFavoriteTcin(resultSet: ResultSet) =
+private fun mapToFavoriteItem(resultSet: ResultSet) =
     with(resultSet) {
-        UserFavoriteTcin(
+        FavoriteItem(
             id = getLong("id"),
-            userName = getString("user_name"),
-            tcin = getString("tcin"),
+            itemIdentifier = getString("item"),
             createdTs = getInstant("created_ts"),
             updatedTs = getInstant("updated_ts"),
         )

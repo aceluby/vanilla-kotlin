@@ -13,52 +13,52 @@ import org.junit.jupiter.api.Test
 class FavoriteItemsRoutesTest {
 
     @Test fun `postFavoriteTcinsRoute OK`() {
-        val saveFavoriteTcin: SaveFavoriteTcin = { _ -> SaveResult.Success }
-        val route = postFavoriteTcinsRoute(saveFavoriteTcin = saveFavoriteTcin)
+        val saveFavoriteItem: SaveFavoriteItem = { _ -> SaveResult.Success }
+        val route = postFavoriteTcinsRoute(saveFavoriteItem = saveFavoriteItem)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.POST, "/api/v1/favorite_tcins/1").addAuth())
+        val response = handler(Request(Method.POST, "/api/v1/favorite_items/1").addAuth())
         assertSoftly(response) {
             status shouldBe Status.OK
         }
     }
 
     @Test fun `postFavoriteTcinsRoute missing auth`() {
-        val saveFavoriteTcin: SaveFavoriteTcin = { _ -> fail("unexpected function called") }
-        val route = postFavoriteTcinsRoute(saveFavoriteTcin = saveFavoriteTcin)
+        val saveFavoriteItem: SaveFavoriteItem = { _ -> fail("unexpected function called") }
+        val route = postFavoriteTcinsRoute(saveFavoriteItem = saveFavoriteItem)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.POST, "/api/v1/favorite_tcins/1"))
+        val response = handler(Request(Method.POST, "/api/v1/favorite_items/1"))
         response.status shouldBe Status.UNAUTHORIZED
     }
 
     @Test fun `deleteFavoriteTcinsRoute OK`() {
-        val deleteFavoriteTcin: DeleteFavoriteTcin = { _, _ -> DeleteResult.Success }
-        val route = deleteFavoriteTcinsRoute(deleteFavoriteTcin = deleteFavoriteTcin)
+        val deleteFavoriteItem: DeleteFavoriteItem = { _, _ -> DeleteResult.Success }
+        val route = deleteFavoriteTcinsRoute(deleteFavoriteItem = deleteFavoriteItem)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.DELETE, "/api/v1/favorite_tcins/1").addAuth())
+        val response = handler(Request(Method.DELETE, "/api/v1/favorite_items/1").addAuth())
         assertSoftly(response) {
             status shouldBe Status.OK
         }
     }
 
     @Test fun `deleteFavoriteTcinsRoute missing auth`() {
-        val deleteFavoriteTcin: DeleteFavoriteTcin = { _, _ -> fail("unexpected function called") }
-        val route = deleteFavoriteTcinsRoute(deleteFavoriteTcin = deleteFavoriteTcin)
+        val deleteFavoriteItem: DeleteFavoriteItem = { _, _ -> fail("unexpected function called") }
+        val route = deleteFavoriteTcinsRoute(deleteFavoriteItem = deleteFavoriteItem)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.DELETE, "/api/v1/favorite_tcins/1"))
+        val response = handler(Request(Method.DELETE, "/api/v1/favorite_items/1"))
         response.status shouldBe Status.UNAUTHORIZED
     }
 
     @Test fun `getFavoriteTcinsRoute OK`() {
         val favoriteTcins = listOf("1", "2")
-        val getFavorites: GetFavoriteTcins = { _ -> favoriteTcins }
-        val route = getFavoriteTcinsRoute(getFavoriteTcins = getFavorites)
+        val getFavorites: GetFavoriteItemIds = { _ -> favoriteTcins }
+        val route = getFavoriteTcinsRoute(getFavoriteItemIds = getFavorites)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.GET, "/api/v1/favorite_tcins").addAuth())
+        val response = handler(Request(Method.GET, "/api/v1/favorite_items").addAuth())
         assertSoftly(response) {
             status shouldBe Status.OK
             bodyString() shouldBe """["1","2"]"""
@@ -66,11 +66,11 @@ class FavoriteItemsRoutesTest {
     }
 
     @Test fun `getFavoriteTcinsRoute missing auth`() {
-        val getFavoriteTcins: GetFavoriteTcins = { _ -> fail("unexpected function called") }
-        val route = getFavoriteTcinsRoute(getFavoriteTcins = getFavoriteTcins)
+        val getFavoriteItemIds: GetFavoriteItemIds = { _ -> fail("unexpected function called") }
+        val route = getFavoriteTcinsRoute(getFavoriteItemIds = getFavoriteItemIds)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.GET, "/api/v1/favorite_tcins"))
+        val response = handler(Request(Method.GET, "/api/v1/favorite_items"))
         response.status shouldBe Status.UNAUTHORIZED
     }
 
@@ -94,7 +94,7 @@ class FavoriteItemsRoutesTest {
             bodyString() shouldEqualJson """
                 [
                   {
-                    "tcin": "1",
+                    "item": "1",
                     "lifecycle_state": "READY_FOR_LAUNCH",
                     "classification": {
                       "merchandise": {
@@ -104,7 +104,7 @@ class FavoriteItemsRoutesTest {
                     }
                   },
                   {
-                    "tcin": "2",
+                    "item": "2",
                     "lifecycle_state": "READY_FOR_LAUNCH",
                     "classification": {
                       "merchandise": {
@@ -129,11 +129,11 @@ class FavoriteItemsRoutesTest {
 
     @Test fun `admin getFavoriteTcinsRoute OK`() {
         val favoriteTcins = listOf("1", "2")
-        val getFavorites: GetFavoriteTcins = { _ -> favoriteTcins }
-        val route = adminGetFavoriteTcinsRoute(getFavoriteTcins = getFavorites)
+        val getFavorites: GetFavoriteItemIds = { _ -> favoriteTcins }
+        val route = adminGetFavoriteTcinsRoute(getFavoriteItemIds = getFavorites)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.GET, "/api/v1/admin/favorite_tcins?user_name=${randomUsername()}").addAdminAuth())
+        val response = handler(Request(Method.GET, "/api/v1/admin/favorite_items?user_name=${randomUsername()}").addAdminAuth())
         assertSoftly(response) {
             status shouldBe Status.OK
             bodyString() shouldBe """["1","2"]"""
@@ -141,23 +141,23 @@ class FavoriteItemsRoutesTest {
     }
 
     @Test fun `admin getFavoriteTcinsRoute missing userName query param`() {
-        val getFavorites: GetFavoriteTcins = { _ -> fail("unexpected function called") }
-        val route = adminGetFavoriteTcinsRoute(getFavoriteTcins = getFavorites)
+        val getFavorites: GetFavoriteItemIds = { _ -> fail("unexpected function called") }
+        val route = adminGetFavoriteTcinsRoute(getFavoriteItemIds = getFavorites)
         val handler = buildTestHandler(contractRoute = route)
 
-        val response = handler(Request(Method.GET, "/api/v1/admin/favorite_tcins").addAdminAuth())
+        val response = handler(Request(Method.GET, "/api/v1/admin/favorite_items").addAdminAuth())
         assertSoftly(response) {
             status shouldBe Status.BAD_REQUEST
         }
     }
 
     @Test fun `admin getFavoriteTcinsRoute insufficient auth`() {
-        val getFavoriteTcins: GetFavoriteTcins = { _ -> fail("unexpected function called") }
-        val route = adminGetFavoriteTcinsRoute(getFavoriteTcins = getFavoriteTcins)
+        val getFavoriteItemIds: GetFavoriteItemIds = { _ -> fail("unexpected function called") }
+        val route = adminGetFavoriteTcinsRoute(getFavoriteItemIds = getFavoriteItemIds)
         val handler = buildTestHandler(contractRoute = route)
 
         // only adding standard user auth roles, not admin
-        val response = handler(Request(Method.GET, "/api/v1/admin/favorite_tcins").addAuth())
+        val response = handler(Request(Method.GET, "/api/v1/admin/favorite_items").addAuth())
         response.status shouldBe Status.UNAUTHORIZED
     }
 }

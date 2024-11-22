@@ -5,57 +5,57 @@ internal class UserFavoriteTcinRepositoryTest {
     private val db by lazy { buildTestDb() }
     private val repository by lazy { UserFavoriteTcinRepository(db) }
 
-    @Test fun `user favorite tcin crud operations`() {
+    @Test fun `user favorite item crud operations`() {
         val testUserName = randomUsername()
         val testTcin = randomTcin()
 
         // initially there should be no data found or deleted
-        repository.deleteByUserNameAndTcin(testUserName, testTcin) shouldBe 0
-        repository.findByUserName(testUserName) shouldBe emptyList()
+        repository.deleteItem(testUserName, testTcin) shouldBe 0
+        repository.findAll(testUserName) shouldBe emptyList()
 
         // insert
-        val inserted = repository.upsert(UserFavoriteTcin(userName = testUserName, tcin = testTcin))
+        val inserted = repository.upsert(UserFavoriteTcin(userName = testUserName, item = testTcin))
         inserted.userName shouldBe testUserName
-        inserted.tcin shouldBe testTcin
+        inserted.item shouldBe testTcin
         val insertedId = checkNotNull(inserted.id)
         val insertedCreatedAt = checkNotNull(inserted.createdTs)
         val insertedUpdatedAt = checkNotNull(inserted.updatedTs)
 
         // find the favorite we previously inserted
-        val postInsertFavorites = repository.findByUserName(testUserName)
+        val postInsertFavorites = repository.findAll(testUserName)
         postInsertFavorites.size shouldBe 1
         assertSoftly(postInsertFavorites.first()) {
             userName shouldBe testUserName
-            tcin shouldBe testTcin
+            item shouldBe testTcin
             id shouldBe insertedId
             createdTs shouldBe insertedCreatedAt
             updatedTs shouldBe insertedUpdatedAt
         }
 
         // update
-        assertSoftly(repository.upsert(UserFavoriteTcin(userName = testUserName, tcin = testTcin))) {
+        assertSoftly(repository.upsert(UserFavoriteTcin(userName = testUserName, item = testTcin))) {
             userName shouldBe testUserName
-            tcin shouldBe testTcin
+            item shouldBe testTcin
             id shouldBe insertedId
             createdTs shouldBe insertedCreatedAt
             checkNotNull(updatedTs) shouldBeGreaterThan insertedUpdatedAt
         }
 
         // delete
-        repository.deleteByUserNameAndTcin(testUserName, testTcin) shouldBe 1
+        repository.deleteItem(testUserName, testTcin) shouldBe 1
 
         // after deletion, there should again be no data found or deleted
-        repository.deleteByUserNameAndTcin(testUserName, testTcin) shouldBe 0
-        repository.findByUserName(testUserName) shouldBe emptyList()
+        repository.deleteItem(testUserName, testTcin) shouldBe 0
+        repository.findAll(testUserName) shouldBe emptyList()
     }
 
     @Test fun `validate outbox`() {
         val userName = randomUsername()
-        val tcin = randomTcin()
-        val messageKey = "$userName:$tcin"
+        val item = randomTcin()
+        val messageKey = "$userName:$item"
 
-        repository.upsert(UserFavoriteTcin(userName = userName, tcin = tcin))
-        repository.deleteByUserNameAndTcin(userName, tcin)
+        repository.upsert(UserFavoriteTcin(userName = userName, item = item))
+        repository.deleteItem(userName, item)
 
         val outboxes =
             db.findAll(
@@ -71,19 +71,19 @@ internal class UserFavoriteTcinRepositoryTest {
 
         outboxes.size shouldBe 2
 
-        // The first outbox row should represent the inserted user favorite tcin
+        // The first outbox row should represent the inserted user favorite item
         val insertedFavoriteOutbox = outboxes.first()
         insertedFavoriteOutbox.messageKey shouldBe messageKey
         insertedFavoriteOutbox.createdTs shouldNotBe null
 
         assertSoftly(mapper.readValue<UserFavoriteTcin>(checkNotNull(insertedFavoriteOutbox.body))) {
-            this.tcin shouldBe tcin
+            this.item shouldBe item
             this.userName shouldBe userName
             createdTs shouldNotBe null
             updatedTs shouldNotBe null
         }
 
-        // The second outbox should represent the deleted user favorite tcin
+        // The second outbox should represent the deleted user favorite item
         val deletedFavoriteOutbox = outboxes[1]
         deletedFavoriteOutbox.messageKey shouldBe messageKey
         deletedFavoriteOutbox.createdTs shouldNotBe null
@@ -92,17 +92,17 @@ internal class UserFavoriteTcinRepositoryTest {
 
     @Test fun `validate batch`() {
         val userName = randomUsername()
-        val tcin = randomTcin()
-        val userFavoriteTcin = UserFavoriteTcin(userName = userName, tcin = tcin)
+        val item = randomTcin()
+        val userFavoriteTcin = UserFavoriteTcin(userName = userName, item = item)
 
         // insert
         repository.addToBatch(userFavoriteTcin)
         repository.runBatch()
 
-        var dbFavoriteTcin = repository.findByUserName(userName).first { it.tcin == tcin }
+        var dbFavoriteTcin = repository.findAll(userName).first { it.item == item }
         assertSoftly(dbFavoriteTcin) {
             userName shouldBe userName
-            tcin shouldBe tcin
+            item shouldBe item
             createdTs shouldNotBe null
             updatedTs shouldNotBe null
             createdTs shouldBe updatedTs
@@ -112,10 +112,10 @@ internal class UserFavoriteTcinRepositoryTest {
         repository.addToBatch(userFavoriteTcin)
         repository.runBatch()
 
-        dbFavoriteTcin = repository.findByUserName(userName).first { it.tcin == tcin }
+        dbFavoriteTcin = repository.findAll(userName).first { it.item == item }
         assertSoftly(dbFavoriteTcin) {
             userName shouldBe userName
-            tcin shouldBe tcin
+            item shouldBe item
             createdTs shouldNotBe null
             updatedTs shouldNotBe null
             updatedTs?.shouldBeAfter(createdTs ?: fail { "createdTs should not be null" })
@@ -126,6 +126,6 @@ internal class UserFavoriteTcinRepositoryTest {
         repository.addToBatch(deleteRecord)
         repository.runBatch()
 
-        repository.findByUserName(userName).none { it.tcin == tcin } shouldBe true
+        repository.findAll(userName).none { it.item == item } shouldBe true
     }
 }

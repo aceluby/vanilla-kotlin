@@ -15,7 +15,7 @@ class MockItemServer : AutoCloseable {
           "data": {
             "item": {
               "lifecycleState": "READY_FOR_LAUNCH",
-              "tcin": "50183713",
+              "item": "50183713",
               "classification": {
                 "merchandise": {
                   "classId": 6,

@@ -50,25 +50,19 @@ class KafkaProducer<V>(
 
     val partitionCount: Int by lazy { producer.partitionsFor(config.topic).size }
 
-    private val containerImage: String by lazy {
-        System.getenv("container_image") ?: "unknown"
-    }
-
-    private val properties = Properties().apply {
-        this[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = config.broker
-        this[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java.name
-        this[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = BytesSerializer::class.java.name
-        this[ProducerConfig.RETRY_BACKOFF_MS_CONFIG] = 1000L
-
+    private val producerProperties = Properties().apply {
+        put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.broker)
+        put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java.name)
+        put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, BytesSerializer::class.java.name)
+        put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000L)
         // see https://www.naleid.com/2021/05/02/kafka-topic-partitioning-replication.html for a detailed description of these settings
-        this[ProducerConfig.COMPRESSION_TYPE_CONFIG] = "lz4"
-        this[ProducerConfig.ACKS_CONFIG] = "all"
-        this[ProducerConfig.MAX_REQUEST_SIZE_CONFIG] = 1024 * 1024 * 4
-        this[ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION] = 1
-        this[ProducerConfig.BATCH_SIZE_CONFIG] = 1024 * 851
-        this[ProducerConfig.BUFFER_MEMORY_CONFIG] = 1024 * 1024 * 64
-        this[ProducerConfig.LINGER_MS_CONFIG] = 100
-
+        put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4")
+        put(ProducerConfig.ACKS_CONFIG, "all")
+        put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, 1024 * 1024 * 4)
+        put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1)
+        put(ProducerConfig.BATCH_SIZE_CONFIG, 1024 * 851)
+        put(ProducerConfig.BUFFER_MEMORY_CONFIG, 1024 * 1024 * 64)
+        put(ProducerConfig.LINGER_MS_CONFIG, 100)
         // otherwise allow full customization of the properties for things like cert-based SSL or other tuning
         config.driverProperties?.entries?.forEach {
             this[it.key] = it.value
@@ -77,7 +71,7 @@ class KafkaProducer<V>(
 
     fun start(): KafkaProducer<V> {
         check(!this::producer.isInitialized) { "producer is already started" }
-        producer = org.apache.kafka.clients.producer.KafkaProducer(properties)
+        producer = org.apache.kafka.clients.producer.KafkaProducer(producerProperties)
 
         log.atInfo().log("started kafka producer")
 
@@ -113,9 +107,6 @@ class KafkaProducer<V>(
         headers.forEach { (key, value) -> add(key, value) }
         if (!headers.containsKey(SPAN_ID_HEADER_NAME)) {
             add(SPAN_ID_HEADER_NAME, generateSpanId().toByteArray())
-        }
-        if (!headers.containsKey(AGENT_HEADER_NAME)) {
-            add(AGENT_HEADER_NAME, containerImage.toByteArray())
         }
         if (!headers.containsKey(PROVENANCES_HEADER_NAME) && provenances.isNotEmpty()) {
             add(PROVENANCES_HEADER_NAME, mapper.writeValueAsBytes(provenances))

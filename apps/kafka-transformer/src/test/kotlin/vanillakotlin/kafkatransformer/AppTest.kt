@@ -22,8 +22,8 @@ class AppTest {
     private val sinkTopicName = randomString()
     private val broker = if (System.getenv().containsKey("CI")) "kafka:9092" else "localhost:9092"
 
-    private val tcin = randomTcin()
-    private val testItem = buildTestItem(itemIdentifier = tcin)
+    private val item = randomTcin()
+    private val testItem = buildTestItem(itemIdentifier = item)
 
     @Language("JSON") private val sampleItemGraphQlResponse =
         """
@@ -31,7 +31,7 @@ class AppTest {
           "data": {
             "item": {
               "lifecycleState": "${testItem.description}",
-              "tcin": "$tcin",
+              "item": "$item",
               "classification": {
                 "merchandise": {
                   "classId": ${testItem.price.merchandise?.classId},
@@ -105,11 +105,11 @@ class AppTest {
         producer.start()
 
         val userName = randomUsername()
-        val userFavoriteTcin = UserFavoriteTcin(userName = userName, itemIdentifier = tcin)
+        val userFavoriteTcin = UserFavoriteTcin(userName = userName, itemIdentifier = item)
 
         producer.send(
             KafkaOutputMessage(
-                key = "$userName:$tcin",
+                key = "$userName:$item",
                 value = userFavoriteTcin,
             ),
         )
@@ -119,7 +119,7 @@ class AppTest {
                 userName = userName,
                 item =
                     Item(
-                        id = tcin,
+                        id = item,
                         description = testItem.description,
                         price =
                         Item.Classification(

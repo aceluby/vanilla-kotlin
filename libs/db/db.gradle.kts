@@ -3,11 +3,11 @@ plugins {
 }
 
 dependencies {
-//    api(libs.jdbc.lite)
-//    api(project(":libs:common"))
+    api(libs.jdbc.lite)
+    api(project(":libs:common"))
 
-//    implementation(libs.postgresql)
-//    testImplementation(testFixtures(project(":libs:common")))
+    implementation(libs.postgresql)
+    testImplementation(testFixtures(project(":libs:common")))
 }
 
 tasks {

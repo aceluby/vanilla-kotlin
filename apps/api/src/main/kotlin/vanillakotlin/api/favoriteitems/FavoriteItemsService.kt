@@ -1,74 +1,68 @@
 package vanillakotlin.api.favoriteitems
 
-import vanillakotlin.http.clients.item.GetItemDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
+import vanillakotlin.db.repository.FavoriteItemRepository
+import vanillakotlin.http.clients.item.GetItemDetails
+import vanillakotlin.models.FavoriteItem
+import vanillakotlin.models.Item
+import vanillakotlin.models.ItemIdentifier
+import vanillakotlin.models.UserName
 
 /** alias for [FavoriteItemsService.saveFavoriteTcin] */
-typealias SaveFavoriteTcin = (userFavoriteTcin: UserFavoriteTcin) -> SaveResult
+typealias SaveFavoriteItem = (userFavoriteTcin: FavoriteItem) -> SaveResult
 
 /** alias for [FavoriteItemsService.deleteFavoriteTcin] */
-typealias DeleteFavoriteTcin = (username: UserName, itemIdentifier: ItemIdentifier) -> DeleteResult
-
-/** alias for [FavoriteItemsService.getFavoriteTcins] */
-typealias GetFavoriteTcins = (username: UserName) -> List<ItemIdentifier>
+typealias DeleteFavoriteItem = (itemIdentifier: ItemIdentifier) -> DeleteResult
 
 /** alias for [FavoriteItemsService.getFavoriteItems] */
-typealias GetFavoriteItems = (username: UserName) -> List<Item>
+typealias GetFavoriteItemIds = () -> List<ItemIdentifier>
+
+/** alias for [FavoriteItemsService.getFavoriteItems] */
+typealias GetFavoriteItems = () -> List<Item>
 
 class FavoriteItemsService(
-    val userFavoriteTcinRepository: UserFavoriteTcinRepository,
+    val userFavoriteTcinRepository: FavoriteItemRepository,
     val getItemDetails: GetItemDetails,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun saveFavoriteTcin(userFavoriteTcin: UserFavoriteTcin): SaveResult {
+    fun saveFavoriteTcin(userFavoriteTcin: FavoriteItem): SaveResult {
         return try {
             userFavoriteTcinRepository.upsert(userFavoriteTcin)
             SaveResult.Success
         } catch (ex: Exception) {
-            log.atError().withUserName(userFavoriteTcin.userName).withTgtTcin(userFavoriteTcin.itemIdentifier).setCause(ex).log("Save Failed")
+            log.atError().setCause(ex).log("Save Failed")
             SaveResult.Error(SaveErrorType.SQL_FAILURE)
         }
     }
 
-    fun deleteFavoriteTcin(
-        userName: UserName,
-        itemIdentifier: ItemIdentifier,
-    ): DeleteResult {
-        return try {
-            val rowCount = userFavoriteTcinRepository.deleteByUserNameAndTcin(userName, itemIdentifier)
-            if (rowCount == 0) {
-                log.atWarn().withUserName(userName).withTgtTcin(itemIdentifier).log("Favorite not found during delete.")
-                DeleteResult.NotFound
-            } else {
-                DeleteResult.Success
-            }
-        } catch (ex: Exception) {
-            log.atWarn()
-                .withUserName(userName)
-                .withTgtTcin(itemIdentifier)
-                .setCause(ex)
-                .log("Failed to delete record")
-            return DeleteResult.Error(DeleteErrorType.SQL_FAILURE)
+    fun deleteFavoriteTcin(itemIdentifier: ItemIdentifier): DeleteResult = try {
+        val rowCount = userFavoriteTcinRepository.deleteItem(itemIdentifier)
+        if (rowCount == 0) {
+            log.atWarn().log("Favorite not found during delete.")
+            DeleteResult.NotFound
+        } else {
+            DeleteResult.Success
         }
+    } catch (ex: Exception) {
+        log.atWarn().setCause(ex).log("Failed to delete record")
+        DeleteResult.Error(DeleteErrorType.SQL_FAILURE)
     }
 
-    fun getFavoriteTcins(username: UserName): List<ItemIdentifier> = userFavoriteTcinRepository.findByUserName(username).map { it.tcin }
+    fun getFavoriteItems(): List<ItemIdentifier> = userFavoriteTcinRepository.findAll().map { it.itemIdentifier }
 
-    fun getFavoriteItems(username: UserName): List<Item> {
-        val tcins = getFavoriteTcins(username)
-
-        // map over the tcins in an asynchronous coroutine block, collecting the items that were found.
-        val items =
-            runBlocking(Dispatchers.IO) {
-                tcins.map { tcin ->
-                    async { getItemDetails(tcin) }
-                }.awaitAll().filterNotNull()
-            }
+    fun getFavoriteItemsDetails(): List<Item> {
+        val ids = getFavoriteItems()
+        // map over the items in an asynchronous coroutine block, collecting the items that were found.
+        val items = runBlocking(Dispatchers.IO) {
+            ids.map { id ->
+                async { getItemDetails(id) }
+            }.awaitAll().filterNotNull()
+        }
 
         return items
     }

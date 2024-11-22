@@ -13,7 +13,7 @@ class AppTest {
     private var app: App? = null
     private val sourceTopicName = randomString()
     private val broker = if (System.getenv().containsKey("CI")) "kafka:9092" else "localhost:9092"
-    private val tcin = randomTcin()
+    private val item = randomTcin()
 
     @BeforeAll fun beforeAll() {
         // create random source and sink topic
@@ -62,11 +62,11 @@ class AppTest {
         producer.start()
 
         val userName = randomUsername()
-        val userFavoriteTcin = UserFavoriteTcin(userName = userName, itemIdentifier = tcin)
+        val userFavoriteTcin = UserFavoriteTcin(userName = userName, itemIdentifier = item)
 
         producer.send(
             KafkaOutputMessage(
-                key = "$userName:$tcin",
+                key = "$userName:$item",
                 value = userFavoriteTcin,
             ),
         )
@@ -76,7 +76,7 @@ class AppTest {
             assertSoftly(requireNotNull(app?.repository?.findByUserName(userName))) {
                 size shouldBe 1
                 first().userName shouldBe userName
-                first().tcin shouldBe tcin
+                first().item shouldBe item
             }
         }
     }

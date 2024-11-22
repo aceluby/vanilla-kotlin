@@ -41,16 +41,16 @@ class AppTest {
         response.status shouldBe Status.OK
     }
 
-    @Test fun `post favorite_tcins - missing auth`() {
-        val request = Request(Method.POST, "http://localhost:${app?.httpServerPort}/api/v1/favorite_tcins/1")
+    @Test fun `post favorite_items - missing auth`() {
+        val request = Request(Method.POST, "http://localhost:${app?.httpServerPort}/api/v1/favorite_items/1")
 
         val response = JavaHttpClient()(request)
 
         response.status shouldBe Status.UNAUTHORIZED
     }
 
-    @Test fun `delete favorite_tcins - missing auth`() {
-        val request = Request(Method.DELETE, "http://localhost:${app?.httpServerPort}/api/v1/favorite_tcins/1")
+    @Test fun `delete favorite_items - missing auth`() {
+        val request = Request(Method.DELETE, "http://localhost:${app?.httpServerPort}/api/v1/favorite_items/1")
 
         val response = JavaHttpClient()(request)
 
@@ -73,16 +73,16 @@ class AppTest {
         response.status shouldBe Status.OK
     }
 
-    @Test fun `admin get favorite_tcins authorized`() {
-        val request = Request(Method.GET, "http://localhost:${app?.httpServerPort}/api/v1/admin/favorite_tcins?user_name=x").addAdminAuth()
+    @Test fun `admin get favorite_items authorized`() {
+        val request = Request(Method.GET, "http://localhost:${app?.httpServerPort}/api/v1/admin/favorite_items?user_name=x").addAdminAuth()
 
         val response = JavaHttpClient()(request)
 
         response.status shouldBe Status.OK
     }
 
-    @Test fun `admin get favorite_tcins missing required admin auth`() {
-        val request = Request(Method.GET, "http://localhost:${app?.httpServerPort}/api/v1/admin/favorite_tcins").addAuth()
+    @Test fun `admin get favorite_items missing required admin auth`() {
+        val request = Request(Method.GET, "http://localhost:${app?.httpServerPort}/api/v1/admin/favorite_items").addAuth()
 
         val response = JavaHttpClient()(request)
 
@@ -91,8 +91,8 @@ class AppTest {
 
     @Test fun `favorite_items - normal operations`() {
         val userName = randomUsername()
-        val testTcin1 = "tcin1"
-        val testTcin2 = "tcin2"
+        val testTcin1 = "item1"
+        val testTcin2 = "item2"
         val client = JavaHttpClient()
 
         testReadFavorite(userName, emptySet(), client)
@@ -116,29 +116,29 @@ class AppTest {
 
     private fun testReadFavorite(
         userName: String,
-        tcins: Set<String>,
+        items: Set<String>,
         client: HttpHandler = JavaHttpClient(),
     ) {
-        val request = Request(Method.GET, "http://localhost:${app?.httpServerPort}/api/v1/favorite_tcins").addAuth(userName)
+        val request = Request(Method.GET, "http://localhost:${app?.httpServerPort}/api/v1/favorite_items").addAuth(userName)
 
         val response = client(request)
 
         response.status shouldBe Status.OK
         val responseBody = response.body.toString()
         val getResult = mapper.readValue<List<String>>(responseBody).toSet()
-        getResult.size shouldBe tcins.size
+        getResult.size shouldBe items.size
         getResult.forEach {
-            it shouldBeIn tcins
+            it shouldBeIn items
         }
     }
 
     private fun testPost(
         userName: String,
-        tcin: String,
+        item: String,
         client: HttpHandler = JavaHttpClient(),
     ) {
         val request =
-            Request(Method.POST, "http://localhost:${app?.httpServerPort}/api/v1/favorite_tcins/$tcin")
+            Request(Method.POST, "http://localhost:${app?.httpServerPort}/api/v1/favorite_items/$item")
                 .addAuth(userName)
         val response = client(request)
 
@@ -147,11 +147,11 @@ class AppTest {
 
     private fun testDelete(
         userName: String,
-        tcin: String,
+        item: String,
         client: HttpHandler = JavaHttpClient(),
     ) {
         val request =
-            Request(Method.DELETE, "http://localhost:${app?.httpServerPort}/api/v1/favorite_tcins/$tcin")
+            Request(Method.DELETE, "http://localhost:${app?.httpServerPort}/api/v1/favorite_items/$item")
                 .addAuth(userName)
         val response = client(request)
 

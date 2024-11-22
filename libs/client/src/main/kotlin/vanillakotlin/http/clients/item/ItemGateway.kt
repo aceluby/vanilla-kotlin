@@ -1,10 +1,14 @@
 package vanillakotlin.http.clients.item
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import vanillakotlin.http.interceptors.CacheTag
+import vanillakotlin.http.interceptors.TelemetryTag
+import vanillakotlin.models.Item
+import vanillakotlin.models.ItemIdentifier
+import vanillakotlin.serde.mapper
 import java.io.IOException
 
 /**
@@ -28,19 +32,17 @@ class ItemGateway(
     private val itemDetailsTelemetryTag = TelemetryTag(service = "item", endpoint = "details")
 
     fun getItemDetails(itemIdentifier: ItemIdentifier): Item? {
-        val url =
-            "${config.baseUrl}/items/v4/graphql/compact/item".toHttpUrl()
-                .newBuilder()
-                .addQueryParameter("selection", "AEUBAAAASGNgCGAgCShgFeUAAA")
-                .addQueryParameter("tcin", itemIdentifier).build()
+        val url = "${config.baseUrl}/items/v4/graphql/compact/item".toHttpUrl()
+            .newBuilder()
+            .addQueryParameter("selection", "AEUBAAAASGNgCGAgCShgFeUAAA")
+            .addQueryParameter("item", itemIdentifier).build()
 
-        val request =
-            Request.Builder()
-                .url(url)
-                .header("x-api-key", config.apiKey)
-                .tag(CacheTag::class.java, CacheTag(namespace = "itemDetails", key = itemIdentifier))
-                .tag(TelemetryTag::class.java, itemDetailsTelemetryTag)
-                .build()
+        val request = Request.Builder()
+            .url(url)
+            .header("x-api-key", config.apiKey)
+            .tag(CacheTag::class.java, CacheTag(context = "itemDetails", key = itemIdentifier))
+            .tag(TelemetryTag::class.java, itemDetailsTelemetryTag)
+            .build()
 
         // execute a synchronous http request. `enqueue` is available instead of execute if you want asynchronous behavior.
         httpClient.newCall(request).execute().use { response ->
