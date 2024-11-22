@@ -6,7 +6,6 @@ import com.target.liteforjdbc.propertiesToMap
 import com.target.liteforjdbc.setParameters
 import org.intellij.lang.annotations.Language
 import vanillakotlin.models.FavoriteItem
-import vanillakotlin.models.UserName
 import vanillakotlin.models.buildDeletedOutbox
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -15,53 +14,47 @@ typealias AddToBatch = (FavoriteItem) -> Unit
 typealias RunBatch = () -> Int
 
 class FavoriteItemRepository(private val db: Db) {
-    fun upsert(favorite: FavoriteItem): FavoriteItem {
-        return db.withTransaction { tx ->
-            val FavoriteItem =
-                checkNotNull(
-                    tx.executeQuery(
-                        sql =
-                        """
-                            INSERT INTO user_favorite_item (user_name, item)
-                              VALUES (:userName, :item)
-                            ON CONFLICT ON CONSTRAINT unique_user_item DO UPDATE 
+    fun upsert(favorite: FavoriteItem): FavoriteItem = db.withTransaction { tx ->
+        val FavoriteItem = checkNotNull(
+                tx.executeQuery(
+                    sql =
+                    """
+                            INSERT INTO favorite_item (item)
+                              VALUES (:item)
+                            ON CONFLICT ON CONSTRAINT unique_item DO UPDATE 
                               SET updated_ts = CURRENT_TIMESTAMP
                             RETURNING *
                             """.trimIndent(),
-                        args = favorite.propertiesToMap(),
-                        rowMapper = ::mapToFavoriteItem,
-                    ),
-                ) { "Unexpected state: Insert didn't return a result." }
+                    args = favorite.propertiesToMap(),
+                    rowMapper = ::mapToFavoriteItem,
+                ),
+            ) { "Unexpected state: Insert didn't return a result." }
 
-            insertOutbox(tx, FavoriteItem.buildOutbox())
+        insertOutbox(tx, FavoriteItem.buildOutbox())
 
-            FavoriteItem
-        }
+        FavoriteItem
     }
 
     fun deleteItem(
         item: String,
-    ): Int {
-        return db.withTransaction { tx ->
-            val rowCount =
-                tx.executeUpdate(
-                    sql = "DELETE FROM user_favorite_item WHERE item = :item",
-                    args = mapOf("item" to item),
-                )
+    ): Int = db.withTransaction { tx ->
+        val rowCount =
+            tx.executeUpdate(
+                sql = "DELETE FROM favorite_item WHERE item = :item",
+                args = mapOf("item" to item),
+            )
 
-            if (rowCount > 0) {
-                insertOutbox(tx, buildDeletedOutbox(item))
-            }
-
-            rowCount
+        if (rowCount > 0) {
+            insertOutbox(tx, buildDeletedOutbox(item))
         }
+
+        rowCount
     }
 
-    fun findAll(): List<FavoriteItem> =
-        db.findAll(
-            sql = "SELECT * FROM favorite_Item",
-            rowMapper = ::mapToFavoriteItem,
-        )
+    fun findAll(): List<FavoriteItem> = db.findAll(
+        sql = "SELECT * FROM favorite_Item",
+        rowMapper = ::mapToFavoriteItem,
+    )
 
     // The batch here is just a list because we don't need to worry about concurrency in this case - once the consumer has consumed an
     // entire batch of records, the thread will wait until the running of the batch has been completed. If we were to run this in an
@@ -82,22 +75,22 @@ class FavoriteItemRepository(private val db: Db) {
         takeIf { batch.isNotEmpty() }?.run {
             @Language("SQL") val updateQuery =
                 """
-                UPDATE user_favorite_item 
+                UPDATE favorite_item 
                 SET updated_ts = CURRENT_TIMESTAMP 
-                WHERE user_name = ? AND item = ?
+                WHERE item = ?
                 """.trimIndent()
 
             @Language("SQL") val insertQuery =
                 """
-                INSERT INTO user_favorite_item (user_name, item) 
-                VALUES (?, ?) 
+                INSERT INTO favorite_item (item) 
+                VALUES (?) 
                 ON CONFLICT ON CONSTRAINT unique_user_item DO NOTHING
                 """.trimIndent()
 
             @Language("SQL") val deleteQuery =
                 """
-                DELETE FROM user_favorite_item 
-                WHERE user_name = ? AND item = ?
+                DELETE FROM favorite_item 
+                WHERE  item = ?
                 """.trimIndent()
 
             // We're going to create 3 prepared statements here, one for each query. We're going to use the same connection for all of them.
@@ -135,11 +128,10 @@ class FavoriteItemRepository(private val db: Db) {
         return batchSize
     }
 
-    private inline fun <T> PreparedStatement.useWithRollback(block: (PreparedStatement) -> T): T =
-        use {
-            connection.autoCommit = false
-            runCatching { block(this) }.onFailure { connection.rollback() }.getOrThrow()
-        }
+    private inline fun <T> PreparedStatement.useWithRollback(block: (PreparedStatement) -> T): T = use {
+        connection.autoCommit = false
+        runCatching { block(this) }.onFailure { connection.rollback() }.getOrThrow()
+    }
 }
 
 private fun mapToFavoriteItem(resultSet: ResultSet) =

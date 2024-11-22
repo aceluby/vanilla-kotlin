@@ -10,6 +10,10 @@ application {
 
 dependencies {
     implementation(project(":libs:db"))
+    implementation(project(":libs:kafka"))
+    implementation(project(":libs:common"))
+    implementation(project(":libs:http4k"))
+    implementation(project(":libs:metrics"))
 
     testImplementation(testFixtures(project(":libs:db")))
     testImplementation(testFixtures(project(":libs:common")))

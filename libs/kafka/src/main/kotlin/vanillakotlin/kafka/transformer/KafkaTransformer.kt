@@ -27,7 +27,7 @@ import vanillakotlin.kafka.consumer.KafkaConsumer
 import vanillakotlin.kafka.consumer.KafkaError
 import vanillakotlin.kafka.consumer.runtimeErrorHandler
 import vanillakotlin.kafka.models.KafkaMessage
-import vanillakotlin.kafka.models.SequenceHandler
+import vanillakotlin.kafka.models.KafkaConsumerSequenceHandler
 import vanillakotlin.kafka.models.TopicPartitionOffset
 import vanillakotlin.kafka.producer.KafkaProducer
 import vanillakotlin.kafka.producer.PartitionCalculator
@@ -79,7 +79,7 @@ class KafkaTransformer<OUT>(
     private lateinit var kafkaAckChannel: Channel<EventResult<OUT>>
     private lateinit var tickerChannel: Channel<Unit>
 
-    private val consumerEventHandler = SequenceHandler { seq ->
+    private val consumerEventHandler = KafkaConsumerSequenceHandler { seq ->
         seq.forEach { kafkaMessage ->
             val deferred = CompletableDeferred<TransformResult<OUT>>()
             runBlocking {
@@ -216,7 +216,7 @@ class KafkaTransformer<OUT>(
         }
     }
 
-    private fun start() = runBlocking {
+    fun start() = runBlocking {
         log.atInfo().log("Starting transformer consumer for ${consumerConfig.topics} with $numberOfWorkers workers")
         // Start up the channels
         kafkaPublisherChannel = Channel(numberOfWorkers * WORKER_CHANNEL_SIZE)

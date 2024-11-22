@@ -8,7 +8,6 @@ import vanillakotlin.http4k.CorsMode
 import vanillakotlin.metrics.OtelMetrics
 
 // This file includes the data classes needed to define the configuration for the app.
-// see docs/configuration.md for more details
 
 data class Config(
     val http: HttpConfig,

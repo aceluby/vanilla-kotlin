@@ -1,12 +1,17 @@
 package vanillakotlin.kafkatransformer
 
+import vanillakotlin.http.clients.ConnectionConfig
 import vanillakotlin.http.clients.item.ItemGateway
+import vanillakotlin.http.interceptors.RetryInterceptor
+import vanillakotlin.kafka.consumer.KafkaConsumer
+import vanillakotlin.kafka.producer.KafkaProducer
+import vanillakotlin.metrics.OtelMetrics
 
 // see docs/configuration.md for more details
 
 data class Config(
     val http: HttpConfig,
-    val metrics: OtelMetricsPublisher.Config,
+    val metrics: OtelMetrics.Config,
     val kafka: KafkaConfig,
 ) {
     data class HttpConfig(
@@ -24,7 +29,6 @@ data class Config(
                 val gateway: ItemGateway.Config,
                 val connection: ConnectionConfig,
                 val retry: RetryInterceptor.Config,
-                val cache: CachingInterceptor.Config,
             )
         }
     }

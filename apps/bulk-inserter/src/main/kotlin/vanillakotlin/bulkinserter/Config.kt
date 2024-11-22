@@ -1,11 +1,12 @@
 package vanillakotlin.bulkinserter
 
-
-// see docs/configuration.md for more details
+import com.target.liteforjdbc.DbConfig
+import vanillakotlin.kafka.consumer.KafkaConsumer
+import vanillakotlin.metrics.OtelMetrics
 
 data class Config(
     val http: HttpConfig,
-    val metrics: OtelMetricsPublisher.Config,
+    val metrics: OtelMetrics.Config,
     val kafka: KafkaConfig,
     val db: DbConfig,
 ) {

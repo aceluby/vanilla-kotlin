@@ -15,7 +15,7 @@ class BulkInserterEventHandlerTest {
         var runBatch = false
 
         val handler =
-            BulkInserterEventHandler(
+            BulkInserterHandler(
                 addToBatch = { batch.add(it) },
                 runBatch = {
                     runBatch = true
@@ -43,7 +43,7 @@ class BulkInserterEventHandlerTest {
         var runBatch = false
 
         val handler =
-            BulkInserterEventHandler(
+            BulkInserterHandler(
                 addToBatch = { batch.add(it) },
                 runBatch = {
                     runBatch = true
@@ -79,7 +79,7 @@ class BulkInserterEventHandlerTest {
         val batch = mutableListOf<UserFavoriteTcin>()
 
         val handler =
-            BulkInserterEventHandler(
+            BulkInserterHandler(
                 addToBatch = { batch.add(it) },
                 runBatch = { 1 },
             )
@@ -103,7 +103,7 @@ class BulkInserterEventHandlerTest {
         var runBatch = false
 
         val handler =
-            BulkInserterEventHandler(
+            BulkInserterHandler(
                 addToBatch = { batch.add(it) },
                 runBatch = {
                     runBatch = true

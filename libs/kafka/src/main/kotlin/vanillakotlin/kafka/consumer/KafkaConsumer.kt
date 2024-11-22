@@ -13,7 +13,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 import vanillakotlin.kafka.models.KafkaMessage
 import vanillakotlin.kafka.models.Partition
-import vanillakotlin.kafka.models.SequenceHandler
+import vanillakotlin.kafka.models.KafkaConsumerSequenceHandler
 import vanillakotlin.kafka.models.TopicPartitionOffset
 import vanillakotlin.models.HealthCheckResponse
 import vanillakotlin.models.HealthMonitor
@@ -28,7 +28,7 @@ private val log = LoggerFactory.getLogger(vanillakotlin.kafka.consumer.KafkaCons
 
 class KafkaConsumer(
     private val config: Config,
-    private val eventHandler: SequenceHandler,
+    private val eventHandler: KafkaConsumerSequenceHandler,
     private val uncaughtErrorHandler: ErrorHandler = runtimeErrorHandler(),
 ) : HealthMonitor {
     data class Config(

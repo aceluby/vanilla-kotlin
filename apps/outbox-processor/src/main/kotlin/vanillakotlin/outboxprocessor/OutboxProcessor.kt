@@ -1,6 +1,10 @@
 package vanillakotlin.outboxprocessor
 
+import com.target.liteforjdbc.Db
 import org.slf4j.LoggerFactory
+import vanillakotlin.db.repository.popOutbox
+import vanillakotlin.kafka.models.KafkaOutputMessage
+import vanillakotlin.kafka.producer.KafkaSendAsync
 import java.time.Duration
 import java.util.Timer
 import kotlin.concurrent.timerTask
@@ -54,7 +58,7 @@ class OutboxProcessor(
         db.withTransaction { tx ->
             val messages = popOutbox(tx, config.popMessageLimit)
             messages.map { message ->
-                log.atDebug().withEventId(message.messageKey).log("Sending message")
+                log.atDebug().log("Sending message")
 
                 // send all the messages asynchronously
                 kafkaSendAsync(

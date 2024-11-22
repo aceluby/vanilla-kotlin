@@ -5,8 +5,6 @@ package vanillakotlin.models
 
 typealias ItemIdentifier = String
 
-typealias UserName = String
-
 data class Item(
     val id: ItemIdentifier,
     val description: String,
@@ -18,8 +16,3 @@ data class Item(
         val sellingPrice: Double,
     )
 }
-
-data class UserFavoriteItem(
-    val userName: UserName,
-    val item: Item,
-)

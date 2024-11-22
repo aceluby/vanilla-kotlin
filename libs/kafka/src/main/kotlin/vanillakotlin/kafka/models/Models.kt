@@ -15,7 +15,7 @@ data class TopicPartitionOffset(val topic: String, val partition: Int, val offse
     fun getOffsetAndMetadata() = OffsetAndMetadata(offset)
 }
 
-fun interface SequenceHandler {
+fun interface KafkaConsumerSequenceHandler {
     fun processSequence(messages: Sequence<KafkaMessage>)
 }
 
