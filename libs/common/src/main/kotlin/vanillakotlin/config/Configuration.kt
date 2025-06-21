@@ -11,7 +11,6 @@ val log = LoggerFactory.getLogger("vanillakotlin.config.Configuration")
  * The sources are first-in-wins, so define them in order of highest priority descending.
  */
 fun buildOrderedSources(): List<PropertySource> {
-
     // See the [hoplite docs](https://github.com/sksamuel/hoplite#property-sources) on property sources that are enabled by default.
     // For example, you can set a `config.override.http.server.port=8090` environment variable or system property to override the
     // `server.port` configuration value.

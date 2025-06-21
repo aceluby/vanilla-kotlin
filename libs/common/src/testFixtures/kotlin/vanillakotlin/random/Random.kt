@@ -23,7 +23,7 @@ fun randomLong(range: LongRange = 1L..Long.MAX_VALUE) = Arb.long(range).sample(R
 
 fun randomByteArray(size: Int = 10) = Arb.byteArray(Arb.int(size..size), Arb.byte()).sample(RandomSource.default()).value
 
-fun randomTcin() = randomInt(0 until 10.0.pow(8).toInt()).toString().padStart(8, '0')
+fun randomThing() = randomInt(0 until 10.0.pow(8).toInt()).toString().padStart(8, '0')
 
 fun randomUsername() = randomString(size = 7)
 
@@ -42,12 +42,3 @@ fun randomHeaders(
     maxSize,
     slippage,
 ).sample(RandomSource.default()).value
-
-fun randomOutbox() =
-    Outbox(
-        id = randomLong(),
-        messageKey = randomString(),
-        headers = randomHeaders(),
-        body = randomByteArray(),
-        createdTs = randomInstant(),
-    )

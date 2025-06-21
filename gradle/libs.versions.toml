@@ -3,14 +3,14 @@ flyway = "10.11.0"
 guava = "33.1.0-jre"
 hoplite = "2.7.5"
 hoplite-config-loader = "1.7.0"
-http4k = "5.14.4.0"
+http4k = "6.7.0.0"
 jackson = "2.17.0"
+jdbi = "3.44.0"
 jupiter = "5.10.2"
 kasechange = "1.4.1"
 kotest = "5.8.1"
 kotlin-core = "2.0.0"
 kotlin-coroutines = "1.8.0"
-lite-for-jdbc = "2.4.0"
 mockk = "1.13.10"
 okhttp = "4.12.0"
 postgresql = "42.7.3"
@@ -34,18 +34,23 @@ hoplite-config-loader = { module = "toolshed:hoplite-config-loader", version.ref
 hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
 hoplite-hocon = { module = "com.sksamuel.hoplite:hoplite-hocon", version.ref = "hoplite" }
 
-http4k-contract = { module = "org.http4k:http4k-contract", version.ref = "http4k" }
 http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4k" }
+http4k-open-api = { module = "org.http4k:http4k-api-openapi", version.ref = "http4k" }
 http4k-format-jackson = { module = "org.http4k:http4k-format-jackson", version.ref = "http4k" }
-http4k-micrometer = { module = "org.http4k:http4k-metrics-micrometer", version.ref = "http4k" }
 http4k-server-undertow = { module = "org.http4k:http4k-server-undertow", version.ref = "http4k" }
+http4k-websocket-client = { module = "org.http4k:http4k-client-websocket", version.ref = "http4k" }
+http4k-contract = { module = "org.http4k:http4k-contract", version.ref = "http4k" }
+http4k-metrics-micrometer = { module = "org.http4k:http4k-metrics-micrometer", version.ref = "http4k" }
 
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson" }
 jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 
-jdbc-lite = { module = "com.target:lite-for-jdbc", version.ref = "lite-for-jdbc" }
+jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
+jdbi-kotlin = { module = "org.jdbi:jdbi3-kotlin", version.ref = "jdbi" }
+jdbi-postgres = { module = "org.jdbi:jdbi3-postgres", version.ref = "jdbi" }
+jdbi-jackson2 = { module = "org.jdbi:jdbi3-jackson2", version.ref = "jdbi" }
 
 jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "jupiter" }
 jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "jupiter" }
@@ -57,7 +62,7 @@ kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.
 kotest-assertions-json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
 kotest-extensions = { module = "io.kotest:kotest-extensions", version.ref = "kotest" }
 kotest-framework = { module = "io.kotest:kotest-framework-api-jvm", version.ref = "kotest" }
-kotest-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
 kotest-runner-jvm = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
 
@@ -89,42 +94,49 @@ kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka
 rocksdb = { module = "org.rocksdb:rocksdbjni", version.ref = "rocksdb" }
 
 [bundles]
-hoplite = [
-    "hoplite-core",
-    "hoplite-hocon"
+hoplite = ["hoplite-core", "hoplite-hocon"]
+
+http4k = [
+    "http4k-core",
+    "http4k-open-api", 
+    "http4k-format-jackson",
+    "http4k-server-undertow",
+    "http4k-websocket-client"
 ]
+
+jackson = [
+    "jackson-databind",
+    "jackson-jdk8",
+    "jackson-jsr310",
+    "jackson-kotlin"
+]
+
+jdbi = [
+    "jdbi-core",
+    "jdbi-kotlin",
+    "jdbi-postgres",
+    "jdbi-jackson2"
+]
+
+jupiter = ["jupiter-api", "jupiter-engine", "jupiter-params"]
+
+kotest = ["kotest-assertions-core", "kotest-runner-junit5"]
 
 testing = [
     "jupiter-api",
-    "jupiter-engine",
+    "jupiter-engine", 
     "jupiter-params",
     "kotest-assertions-core",
-    "kotest-junit5",
+    "kotest-runner-junit5",
     "kotest-property",
     "kotest-assertions-json",
     "kotest-extensions",
     "mockk"
 ]
 
-jackson = [
-    "jackson-kotlin",
-    "jackson-jdk8",
-    "jackson-jsr310",
-    "jackson-databind"
-]
+okhttp = ["okhttp", "okhttp-mock-server"]
 
-http4k = [
-    "http4k-core",
-    "http4k-format-jackson",
-    "http4k-contract",
-    "http4k-micrometer",
-    "http4k-server-undertow"
-]
-
-resilience4j = [
-    "resilience4j-kotlin",
-    "resilience4j-timelimiter"
-]
+resilience4j = ["resilience4j-timelimiter", "resilience4j-kotlin"]
 
 otel = ["otel-api"]
 

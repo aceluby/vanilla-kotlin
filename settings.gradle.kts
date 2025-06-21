@@ -15,17 +15,33 @@ include(
     "db-migration",
 )
 
+// pluginManagement {
+//    repositories {
+//        gradlePluginPortal()
+//    }
+// }
+//
+// dependencyResolutionManagement {
+//    @Suppress("UnstableApiUsage")
+//    repositories {
+//        mavenCentral()
+//        mavenLocal()
+//    }
+// }
+
 pluginManagement {
     repositories {
-        gradlePluginPortal()
+        maven(url = "https://binrepo.target.com/artifactory/gradle")
+        maven(url = "https://binrepo.target.com/artifactory/gradle-plugins")
     }
 }
 
 dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     repositories {
-        mavenCentral()
         mavenLocal()
+        maven("https://binrepo.target.com/artifactory/maven-central")
+        maven("https://binrepo.target.com/artifactory/gradle")
     }
 }
 

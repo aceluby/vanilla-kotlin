@@ -1,15 +1,16 @@
 package vanillakotlin.bulkinserter
 
-import com.target.liteforjdbc.Db
 import org.slf4j.LoggerFactory
 import vanillakotlin.app.VanillaApp
 import vanillakotlin.app.runApplication
 import vanillakotlin.config.loadConfig
-import vanillakotlin.db.repository.FavoriteItemRepository
+import vanillakotlin.db.createJdbi
+import vanillakotlin.db.repository.FavoriteThingRepository
 import vanillakotlin.http4k.buildServer
 import vanillakotlin.kafka.consumer.KafkaConsumer
 import vanillakotlin.metrics.OtelMetrics
 import vanillakotlin.models.HealthMonitor
+import vanillakotlin.serde.mapper
 
 class App : VanillaApp {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -19,15 +20,15 @@ class App : VanillaApp {
     private val metricsPublisher = OtelMetrics(config.metrics)
 
     // internal so we can leverage it in tests
-    internal val repository = FavoriteItemRepository(Db(config.db))
+    internal val repository = FavoriteThingRepository(createJdbi(config.db, mapper))
 
     private val kafkaConsumer =
         KafkaConsumer(
             config = config.kafka.consumer,
             eventHandler = BulkInserterHandler(
-                    addToBatch = repository::addToBatch,
-                    runBatch = repository::runBatch,
-                ),
+                addToBatch = repository::addToBatch,
+                runBatch = repository::runBatch,
+            ),
         )
 
     private val healthMonitors: List<HealthMonitor> = emptyList()

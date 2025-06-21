@@ -2,15 +2,26 @@ package vanillakotlin.outboxprocessor
 
 import io.kotest.extensions.system.withSystemProperties
 import io.kotest.matchers.shouldBe
+import org.apache.kafka.clients.admin.AdminClient
+import org.apache.kafka.clients.admin.NewTopic
+import org.http4k.client.JavaHttpClient
+import org.http4k.core.Method
+import org.http4k.core.Request
+import org.http4k.core.Status
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import vanillakotlin.db.repository.buildTestDb
+import vanillakotlin.db.repository.insertOutbox
+import vanillakotlin.kafka.collectMessages
+import vanillakotlin.kafka.models.KafkaMessage
+import vanillakotlin.random.randomString
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AppTest {
     private var app: App? = null
-    private val db by lazy { buildTestDb() }
+    private val jdbi by lazy { buildTestDb() }
 
     private val sinkTopicName = randomString()
     private val broker = if (System.getenv().containsKey("CI")) "kafka:9092" else "localhost:9092"
@@ -51,7 +62,7 @@ class AppTest {
         val bodyString = randomString()
 
         // insert an outbox item
-        db.withTransaction { tx -> insertOutbox(tx, buildOutbox(messageKey = messageKey).copy(body = bodyString.toByteArray())) }
+        jdbi.inTransaction<Unit, Exception> { handle -> insertOutbox(handle, buildOutbox(messageKey = messageKey).copy(body = bodyString.toByteArray())) }
 
         // validate the message is in the topic
         val receivedMessages =
@@ -67,6 +78,6 @@ class AppTest {
         String(receivedMessages.first().body!!) shouldBe bodyString
 
         // the db row should be gone
-        getRowCount(db, messageKey) shouldBe 0
+        getRowCount(jdbi, messageKey) shouldBe 0
     }
 }

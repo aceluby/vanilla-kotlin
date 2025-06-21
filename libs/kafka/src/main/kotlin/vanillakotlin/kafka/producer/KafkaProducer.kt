@@ -1,15 +1,12 @@
 package vanillakotlin.kafka.producer
 
-import vanillakotlin.kafka.provenance.PROVENANCES_HEADER_NAME
-import vanillakotlin.kafka.provenance.SPAN_ID_HEADER_NAME
-import vanillakotlin.kafka.provenance.generateSpanId
 import org.apache.kafka.clients.producer.Callback
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.header.internals.RecordHeaders
-import org.apache.kafka.common.serialization.BytesSerializer
+import org.apache.kafka.common.serialization.ByteArraySerializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
 import vanillakotlin.kafka.KAFKA_SEND_METRIC
@@ -17,6 +14,9 @@ import vanillakotlin.kafka.PARTITION_TAG
 import vanillakotlin.kafka.SUCCESS_TAG
 import vanillakotlin.kafka.TOPIC_TAG
 import vanillakotlin.kafka.models.KafkaOutputMessage
+import vanillakotlin.kafka.provenance.PROVENANCES_HEADER_NAME
+import vanillakotlin.kafka.provenance.SPAN_ID_HEADER_NAME
+import vanillakotlin.kafka.provenance.generateSpanId
 import vanillakotlin.metrics.PublishTimerMetric
 import vanillakotlin.serde.mapper
 import java.util.Properties
@@ -34,6 +34,7 @@ class KafkaProducer<V>(
     private val config: Config,
     private val publishTimerMetric: PublishTimerMetric,
     private val partitionFor: (String?, Int) -> Int? = PartitionCalculator.Companion::partitionFor,
+    private val agentName: String? = null,
 ) : AutoCloseable {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -53,7 +54,7 @@ class KafkaProducer<V>(
     private val producerProperties = Properties().apply {
         put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.broker)
         put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java.name)
-        put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, BytesSerializer::class.java.name)
+        put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer::class.java.name)
         put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000L)
         // see https://www.naleid.com/2021/05/02/kafka-topic-partitioning-replication.html for a detailed description of these settings
         put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4")
@@ -84,8 +85,13 @@ class KafkaProducer<V>(
 
     fun sendAsync(kafkaMessage: KafkaOutputMessage<V>): CompletableFuture<RecordMetadata> = with(kafkaMessage) {
         val calculatedPartition = partition ?: partitionKey?.let { partitionFor(it, partitionCount) }
+        val serializedValue = when (value) {
+            is ByteArray -> value
+            null -> null
+            else -> mapper.writeValueAsBytes(value)
+        }
         internalSendAsync(
-            ProducerRecord(topic, calculatedPartition, key, mapper.writeValueAsBytes(value), toRecordHeaders()),
+            ProducerRecord(topic, calculatedPartition, key, serializedValue, toRecordHeaders()),
         )
     }
 
@@ -110,6 +116,9 @@ class KafkaProducer<V>(
         }
         if (!headers.containsKey(PROVENANCES_HEADER_NAME) && provenances.isNotEmpty()) {
             add(PROVENANCES_HEADER_NAME, mapper.writeValueAsBytes(provenances))
+        }
+        if (!headers.containsKey(AGENT_HEADER_NAME) && agentName != null) {
+            add(AGENT_HEADER_NAME, agentName.toByteArray())
         }
     }
 

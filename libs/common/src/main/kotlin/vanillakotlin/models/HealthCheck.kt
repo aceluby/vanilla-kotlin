@@ -14,12 +14,12 @@ interface HealthMonitor {
 data class HealthCheckResponse(
     val name: String,
     val isHealthy: Boolean,
-    val details: String
+    val details: String,
 )
 
 fun healthCheckAll(
     healthMonitors: List<HealthMonitor>,
-    coroutineContext: CoroutineContext = Dispatchers.IO
+    coroutineContext: CoroutineContext = Dispatchers.IO,
 ): List<HealthCheckResponse> {
     return runBlocking(context = coroutineContext) {
         healthMonitors.map { monitor ->
@@ -30,7 +30,7 @@ fun healthCheckAll(
                     HealthCheckResponse(
                         name = monitor.name,
                         isHealthy = false,
-                        details = "${t::class.qualifiedName} - ${t.message}"
+                        details = "${t::class.qualifiedName} - ${t.message}",
                     )
                 }
             }
@@ -40,5 +40,7 @@ fun healthCheckAll(
 
 fun allFailedChecks(
     healthMonitors: List<HealthMonitor>,
-    coroutineContext: CoroutineContext = Dispatchers.IO
-): List<HealthCheckResponse> = healthCheckAll(healthMonitors, coroutineContext).filter { !it.isHealthy }
+    coroutineContext: CoroutineContext = Dispatchers.IO,
+): List<HealthCheckResponse> {
+    return healthCheckAll(healthMonitors, coroutineContext).filter { !it.isHealthy }
+}

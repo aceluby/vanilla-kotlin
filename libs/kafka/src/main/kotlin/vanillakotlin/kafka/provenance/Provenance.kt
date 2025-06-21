@@ -1,5 +1,7 @@
 package vanillakotlin.kafka.provenance
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 import java.util.UUID
 
@@ -13,10 +15,10 @@ const val PROVENANCES_HEADER_NAME = "provenances"
  * business timestamp exists. e.g. 1622464871000
  * @property entity the entity that this provenance is associated with. e.g. a Kafka message coordinate, or a DB row coordinate
  */
-data class Provenance(
-    val spanId: String? = null,
-    val timestamp: Instant,
-    val entity: String,
+data class Provenance @JsonCreator constructor(
+    @JsonProperty("spanId") val spanId: String? = null,
+    @JsonProperty("timestamp") val timestamp: Instant,
+    @JsonProperty("entity") val entity: String,
 )
 
 fun generateSpanId(): String = UUID.randomUUID().toString()

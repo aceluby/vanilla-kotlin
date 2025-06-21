@@ -1,11 +1,5 @@
 package vanillakotlin.http4k
 
-import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.Metrics
-import io.undertow.Handlers
-import io.undertow.Undertow
-import io.undertow.UndertowOptions
-import io.undertow.server.handlers.BlockingHandler
 import net.pearx.kasechange.toSnakeCase
 import org.http4k.contract.ContractRoute
 import org.http4k.contract.jsonschema.v3.AutoJsonToJsonSchema
@@ -30,21 +24,14 @@ import org.http4k.filter.ServerFilters
 import org.http4k.format.ConfigurableJackson
 import org.http4k.routing.RoutingHttpHandler
 import org.http4k.server.Http4kServer
-import org.http4k.server.Http4kSetHeadersHandler
-import org.http4k.server.Http4kUndertowHttpHandler
-import org.http4k.server.Http4kWebSocketCallback
-import org.http4k.server.PolyServerConfig
-import org.http4k.server.hasEventStreamContentType
-import org.http4k.server.requiresWebSocketUpgrade
-import org.http4k.sse.SseHandler
-import org.http4k.websocket.WsHandler
+import org.http4k.server.Undertow
+import org.http4k.server.asServer
 import org.slf4j.LoggerFactory
 import vanillakotlin.extensions.toJsonString
 import vanillakotlin.models.HealthMonitor
 import vanillakotlin.models.healthCheckAll
 import vanillakotlin.serde.mapper
 import java.lang.invoke.MethodHandles
-import java.net.InetSocketAddress
 
 private val log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().name)
 
@@ -55,7 +42,6 @@ val DEFAULT_CORS_MODE = CorsMode.NO_OP
 val DEFAULT_LOGGING_FILTER = simpleLoggingFilter()
 val DEFAULT_EXCEPTION_FILTER = simpleExceptionFilter()
 val DEFAULT_GLOBAL_FILTERS = listOf(DEFAULT_LOGGING_FILTER, DEFAULT_EXCEPTION_FILTER)
-val DEFAULT_MICROMETER_REGISTRY: MeterRegistry = Metrics.globalRegistry
 const val DEFAULT_SWAGGER_PATH = "/swagger.json"
 const val DEFAULT_BASE_PATH = "/"
 const val DEFAULT_PORT = 8080
@@ -112,37 +98,9 @@ enum class CorsMode(val filter: Filter) {
  * forwards unsecured auth headers to the app.  If you aren't using the go-proxy and want your application host to be directly addressable,
  * you would want to set the host to 0.0.0.0. Be sure that none of your endpoints need auth if you do this.
  */
-class Server(val port: Int, val host: String) : PolyServerConfig {
-    override fun toServer(
-        http: HttpHandler?,
-        ws: WsHandler?,
-        sse: SseHandler?,
-    ): Http4kServer {
-        val httpHandler = (http ?: { Response(Status.BAD_REQUEST) }).let(::Http4kUndertowHttpHandler).let(::BlockingHandler)
-        val wsCallback = ws?.let { Handlers.websocket(Http4kWebSocketCallback(it)) }
-        val sseCallback = sse?.let { Http4kSetHeadersHandler(sse) }
-
-        val handlerWithWs = Handlers.predicate(requiresWebSocketUpgrade(), wsCallback, httpHandler)
-
-        val handlerWithSse = sseCallback
-            ?.let { Handlers.predicate(hasEventStreamContentType(), sseCallback, handlerWithWs) }
-            ?: handlerWithWs
-
-        return object : Http4kServer {
-            val server = Undertow.builder()
-                .addHttpListener(port, host)
-                .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
-                .setHandler(handlerWithSse).build()
-
-            override fun start() = apply { server.start() }
-
-            override fun stop() = apply { server.stop() }
-
-            override fun port(): Int = when {
-                port > 0 -> port
-                else -> (server.listenerInfo[0].address as InetSocketAddress).port
-            }
-        }
+class Server(val port: Int, val host: String) {
+    fun toServer(http: HttpHandler): Http4kServer {
+        return http.asServer(Undertow(port))
     }
 }
 

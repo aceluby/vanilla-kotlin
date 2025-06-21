@@ -5,7 +5,7 @@ import vanillakotlin.app.VanillaApp
 import vanillakotlin.app.runApplication
 import vanillakotlin.config.loadConfig
 import vanillakotlin.http.clients.initializeHttpClient
-import vanillakotlin.http.clients.item.ItemGateway
+import vanillakotlin.http.clients.thing.ThingGateway
 import vanillakotlin.http.interceptors.RetryInterceptor
 import vanillakotlin.http.interceptors.TelemetryInterceptor
 import vanillakotlin.http4k.buildServer
@@ -22,18 +22,18 @@ class App : VanillaApp {
 
     private val metricsPublisher = OtelMetrics(config.metrics)
 
-    private val itemClient =
+    private val thingClient =
         initializeHttpClient(
-            config = config.http.client.item.connection,
+            config = config.http.client.thing.connection,
             publishGaugeMetric = metricsPublisher::publishGaugeMetric,
-            RetryInterceptor(config.http.client.item.retry, metricsPublisher::publishCounterMetric),
+            RetryInterceptor(config.http.client.thing.retry, metricsPublisher::publishCounterMetric),
             TelemetryInterceptor(metricsPublisher::publishTimerMetric),
         )
 
-    private val itemGateway =
-        ItemGateway(
-            httpClient = itemClient,
-            config = config.http.client.item.gateway,
+    private val thingGateway =
+        ThingGateway(
+            httpClient = thingClient,
+            config = config.http.client.thing.gateway,
         )
 
     private val kafkaTransformer =
@@ -41,8 +41,8 @@ class App : VanillaApp {
             consumerConfig = config.kafka.consumer,
             producerConfig = config.kafka.producer,
             eventHandler =
-            FavoriteItemsEventHandler(
-                getItemDetails = itemGateway::getItemDetails,
+            FavoriteThingsEventHandler(
+                getThingDetails = thingGateway::getThingDetails,
             ),
             publishTimerMetric = metricsPublisher::publishTimerMetric,
             publishCounterMetric = metricsPublisher::publishCounterMetric,

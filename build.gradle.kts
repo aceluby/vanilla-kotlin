@@ -35,15 +35,16 @@ allprojects {
         }
     }
 
-    configurations.implementation {
-        // semi-temporary fix for https://jira.qos.ch/browse/LOGBACK-1577 to ensure the correct SAXParser is used for log init
-        exclude(group = "pull-parser", module = "pull-parser")
-    }
-
     spotless {
         val configOverride: Map<String, Any> = buildMap {
             put("ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than", 2)
             put("ktlint_standard_multiline-expression-wrapping", "disabled")
+            // Enable annotation formatting rule to enforce proper annotation placement
+            put("ktlint_standard_annotation", "enabled")
+            // Disable filename rule as it's not related to annotation formatting
+            put("ktlint_standard_filename", "disabled")
+            // Disable value-argument-comment rule to allow inline comments in argument lists
+            put("ktlint_standard_value-argument-comment", "disabled")
         }
         val configure: KtlintConfig.() -> KtlintConfig = {
             setEditorConfigPath("${project.rootDir}/.editorconfig")

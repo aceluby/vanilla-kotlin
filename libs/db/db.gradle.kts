@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api(libs.jdbc.lite)
+    api(libs.bundles.jdbi)
     api(project(":libs:common"))
 
     implementation(libs.postgresql)

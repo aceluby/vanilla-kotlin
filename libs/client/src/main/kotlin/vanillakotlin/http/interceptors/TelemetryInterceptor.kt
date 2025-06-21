@@ -1,9 +1,9 @@
 package vanillakotlin.http.interceptors
 
-import org.slf4j.LoggerFactory
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import org.slf4j.LoggerFactory
 import vanillakotlin.metrics.PublishTimerMetric
 import kotlin.time.Duration.Companion.milliseconds
 

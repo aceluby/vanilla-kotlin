@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test
 
 class RandomTest {
 
-    @Test fun `random TCIN`() {
-        randomTcin().length shouldBe 8
+    @Test fun `randomThing should return an 8-digit string`() {
+        randomThing().length shouldBe 8
     }
 
     @Test fun `random string`() {

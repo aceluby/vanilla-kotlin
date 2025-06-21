@@ -86,7 +86,6 @@ class RocksDbStore(
     }
 
     override fun close() {
-        System.err.println("Closing RocksDB")
         db.close()
     }
 }

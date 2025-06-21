@@ -1,23 +1,23 @@
 package vanillakotlin.outboxprocessor
 
-import com.target.liteforjdbc.Db
-import com.target.liteforjdbc.health.DatabaseHealthMonitor
 import org.slf4j.LoggerFactory
 import vanillakotlin.app.VanillaApp
 import vanillakotlin.app.runApplication
 import vanillakotlin.config.loadConfig
-import vanillakotlin.db.toHealthMonitor
+import vanillakotlin.db.createJdbi
 import vanillakotlin.http4k.buildServer
 import vanillakotlin.kafka.producer.KafkaProducer
 import vanillakotlin.metrics.OtelMetrics
+import vanillakotlin.models.HealthCheckResponse
 import vanillakotlin.models.HealthMonitor
+import vanillakotlin.serde.mapper
 
 class App : VanillaApp {
     private val log = LoggerFactory.getLogger(javaClass)
 
     private val config = loadConfig<Config>()
 
-    private val db = Db(config.db)
+    private val jdbi = createJdbi(config.db, mapper)
 
     private val metricsPublisher = OtelMetrics(config.metrics)
 
@@ -27,7 +27,29 @@ class App : VanillaApp {
             publishTimerMetric = metricsPublisher::publishTimerMetric,
         )
 
-    private val healthMonitors: List<HealthMonitor> = listOf(DatabaseHealthMonitor(db).toHealthMonitor())
+    // Create a simple health monitor that checks database connectivity
+    private val healthMonitors: List<HealthMonitor> = listOf(
+        object : HealthMonitor {
+            override val name = "database"
+            override fun check(): HealthCheckResponse = try {
+                val isHealthy = jdbi.withHandle<Boolean, Exception> { handle ->
+                    handle.createQuery("SELECT 1").mapTo(Int::class.java).single() == 1
+                }
+                HealthCheckResponse(
+                    name = name,
+                    isHealthy = isHealthy,
+                    details = "Database connection successful",
+                )
+            } catch (e: Exception) {
+                log.warn("Database health check failed", e)
+                HealthCheckResponse(
+                    name = name,
+                    isHealthy = false,
+                    details = "Database connection failed: ${e.message}",
+                )
+            }
+        },
+    )
 
     // since this app doesn't provide any APIs other than a health endpoint, use a more convenient function to build an httpserver
     private val httpServer = buildServer(port = config.http.server.port) {
@@ -40,7 +62,7 @@ class App : VanillaApp {
 
     private val outboxProcessor = OutboxProcessor(
         config = config.outbox,
-        db = db,
+        jdbi = jdbi,
         kafkaSendAsync = kafkaProducer::sendAsync,
     )
 

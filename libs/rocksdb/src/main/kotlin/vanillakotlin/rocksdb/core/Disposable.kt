@@ -48,4 +48,4 @@ private class NoOpDisposable<T>(private val wrapped: T) : Disposable<T> {
     override fun close() = Unit
 }
 
-inline fun <T, U> Disposable<T>.map(selector: (T) -> U) = Disposable.from(selector(value())) { this.close() }
+fun <T, R> Disposable<T>.map(transform: (T) -> R): Disposable<R> = Disposable.from(transform(value())) { close() }

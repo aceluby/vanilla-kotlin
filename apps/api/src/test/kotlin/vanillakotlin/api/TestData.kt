@@ -1,17 +1,13 @@
 package vanillakotlin.api
 
+import vanillakotlin.models.Thing
+import vanillakotlin.models.ThingIdentifier
+import vanillakotlin.random.randomThing
 
-fun buildTestItem(itemIdentifier: ItemIdentifier = randomTcin()): Item {
-    return Item(
-        id = itemIdentifier,
-        description = "READY_FOR_LAUNCH",
-        price =
-        Item.Classification(
-            merchandise =
-            Item.Classification.Merchandise(
-                departmentId = 1,
-                classId = 2,
-            ),
-        ),
+fun buildTestThing(thingIdentifier: ThingIdentifier = randomThing()): Thing {
+    return Thing(
+        id = thingIdentifier,
+        productName = "Test Product",
+        sellingPrice = 19.99,
     )
 }

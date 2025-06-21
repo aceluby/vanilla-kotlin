@@ -42,9 +42,7 @@ data class Outbox(
     }
 
     // these perform structural equals and hashcode for maps containing ByteArray values
-    private fun <T> Map<T, ByteArray>.contentEquals(other: Map<T, ByteArray>): Boolean =
-        size == other.size && entries.all { (k, v) -> other[k].contentEquals(v) }
+    private fun <T> Map<T, ByteArray>.contentEquals(other: Map<T, ByteArray>): Boolean = size == other.size && entries.all { (k, v) -> other[k].contentEquals(v) }
 
-    private fun <T> Map<T, ByteArray>.contentHashCode(): Int =
-        entries.fold(0) { sum, (k, v) -> 31 * (sum + k.hashCode() + v.contentHashCode()) }
+    private fun <T> Map<T, ByteArray>.contentHashCode(): Int = entries.fold(0) { sum, (k, v) -> 31 * (sum + k.hashCode() + v.contentHashCode()) }
 }

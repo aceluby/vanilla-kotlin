@@ -48,4 +48,3 @@ data class KafkaOutputMessage<V>(
     val partition: Int? = null,
     val partitionKey: String? = null,
 )
-

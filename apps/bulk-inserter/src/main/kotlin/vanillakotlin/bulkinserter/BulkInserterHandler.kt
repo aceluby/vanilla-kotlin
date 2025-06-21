@@ -2,20 +2,23 @@ package vanillakotlin.bulkinserter
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
-import vanillakotlin.db.repository.AddToBatch
-import vanillakotlin.db.repository.RunBatch
+import vanillakotlin.db.repository.AddFavoriteThingToBatch
+import vanillakotlin.db.repository.RunFavoriteThingBatch
 import vanillakotlin.kafka.models.KafkaConsumerSequenceHandler
 import vanillakotlin.kafka.models.KafkaMessage
-import vanillakotlin.models.FavoriteItem
+import vanillakotlin.models.FavoriteThing
+import vanillakotlin.models.UserFavoriteThing
 import vanillakotlin.serde.mapper
 
 /**
- * This handler expects to receive a KafkaMessage whose body is a FavoriteItem.
- * It then adds the FavoriteItem to a batch and runs the batch when the end of the batch is reached.
+ * This handler expects to receive a KafkaMessage whose body is a UserFavoriteThing.
+ * It then converts it to a FavoriteThing and adds it to a batch, running the batch when the end of the batch is reached.
+ *
+ * This handler will fail fast on any errors - malformed messages, null keys, or JSON parsing errors will cause the app to shut down.
  */
 class BulkInserterHandler(
-    private val addToBatch: AddToBatch,
-    private val runBatch: RunBatch,
+    private val addToBatch: AddFavoriteThingToBatch,
+    private val runBatch: RunFavoriteThingBatch,
 ) : KafkaConsumerSequenceHandler {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -28,21 +31,40 @@ class BulkInserterHandler(
 
         // See the `Concurrency Considerations` doc for more information on design
 
-        // A null body means the user favorite was deleted, so we'll create a new UserFavoriteTcin with isDeleted = true to indicate to the
-        // batch processor that it should delete that record
-        val item = requireNotNull(message.key) { "key is required" }
-        val outputBody = message.body?.let { body ->
-            mapper.readValue<FavoriteItem>(body)
-        } ?: FavoriteItem(
-            itemIdentifier = item,
-            isDeleted = true,
-        )
-
-        // Add the UserFavoriteTcin to the current batch
-        addToBatch(outputBody).also { log.atDebug().log { "adding $outputBody to batch" } }
+        processMessage(message)
     }.also {
         // Once the end of the consumer batch has been reached, run the batch.  There is no concurrency here, so be sure that if your
         // application does have concurrency, you handle it properly.
         runBatch().also { batchSize -> log.atDebug().log { "batch successfully run, processed $batchSize records" } }
+    }
+
+    private fun processMessage(message: KafkaMessage) {
+        // Require valid key - app will fail if key is null or blank
+        val key = requireNotNull(message.key) { "Message key is required but was null" }
+        require(key.isNotBlank()) { "Message key is required but was blank" }
+
+        // Extract thingIdentifier from key format "username:thingIdentifier"
+        // App will fail if key doesn't contain a colon
+        require(key.contains(":")) { "Message key '$key' must be in format 'username:thingIdentifier'" }
+
+        val thingIdentifier = key.substringAfterLast(":") // Use substringAfterLast to handle multiple colons
+        require(thingIdentifier.isNotBlank()) { "Thing identifier cannot be blank in key '$key'" }
+
+        // A null body means the user favorite was deleted, so we'll create a new FavoriteThing with isDeleted = true to indicate to the
+        // batch processor that it should delete that record
+        val favoriteThing = message.body?.let { body ->
+            // Parse JSON - will throw exception if malformed, causing app to fail
+            val userFavoriteThing = mapper.readValue<UserFavoriteThing>(body)
+            FavoriteThing(
+                thingIdentifier = userFavoriteThing.thingIdentifier,
+                isDeleted = userFavoriteThing.isDeleted,
+            )
+        } ?: FavoriteThing(
+            thingIdentifier = thingIdentifier,
+            isDeleted = true,
+        )
+
+        // Add the FavoriteThing to the current batch
+        addToBatch(favoriteThing).also { log.atDebug().log { "adding $favoriteThing to batch" } }
     }
 }

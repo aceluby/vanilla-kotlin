@@ -1,7 +1,16 @@
 package vanillakotlin.kafka.consumer
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -11,9 +20,9 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
+import vanillakotlin.kafka.models.KafkaConsumerSequenceHandler
 import vanillakotlin.kafka.models.KafkaMessage
 import vanillakotlin.kafka.models.Partition
-import vanillakotlin.kafka.models.KafkaConsumerSequenceHandler
 import vanillakotlin.kafka.models.TopicPartitionOffset
 import vanillakotlin.models.HealthCheckResponse
 import vanillakotlin.models.HealthMonitor
@@ -21,11 +30,11 @@ import java.lang.Thread.sleep
 import java.time.Duration
 import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 
 private val log = LoggerFactory.getLogger(vanillakotlin.kafka.consumer.KafkaConsumer::class.java.name)
 
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 class KafkaConsumer(
     private val config: Config,
     private val eventHandler: KafkaConsumerSequenceHandler,
@@ -51,12 +60,18 @@ class KafkaConsumer(
         val partitionOffsets: List<TopicPartitionOffset> = emptyList(),
     )
 
+    private var isPaused = false
     private lateinit var _consumer: KafkaConsumer<String, ByteArray>
     private lateinit var kafkaMessage: KafkaMessage
     private var commitErrorCount = 0
     private var stopRequested = false
     private val stopCompleted = CompletableDeferred<Unit>()
     private val _assignment: MutableSet<TopicPartition> = mutableSetOf()
+    private var consumerJob: Job? = null
+
+    // Create a single-threaded context for the consumer to ensure thread safety
+    private val consumerContext = newSingleThreadContext("kafka-consumer-${config.appName}")
+    private val consumerScope = CoroutineScope(consumerContext)
 
     val offsets = ConcurrentHashMap<TopicPartition, OffsetAndMetadata>()
 
@@ -73,17 +88,25 @@ class KafkaConsumer(
         isHealthy = _assignment.isNotEmpty(),
         details = "kafka consumer connection to ${config.topics}",
     )
-    val consumerThread = Executors.newSingleThreadExecutor()
+
     fun start() {
-        consumerThread.execute { runConsumer() }
+        consumerJob = consumerScope.launch {
+            runConsumer()
+        }
     }
 
-    fun stop() = runBlocking {
+    fun stop() = CoroutineScope(Dispatchers.Default).launch {
         stopRequested = true
+        consumerJob?.cancel()
         stopCompleted.await()
+        consumerContext.close()
     }
 
-    fun commitOffsets() {
+    fun togglePause() {
+        isPaused = !isPaused
+    }
+
+    fun commitOffsets() = runBlocking {
         val nextMessageOffsetsToCommit = synchronized(offsets) {
             offsets
                 .toMap()
@@ -92,10 +115,12 @@ class KafkaConsumer(
                 }
                 .also { offsets.clear() }
         }
-        _consumer.commitAsync(nextMessageOffsetsToCommit, offsetCommitErrorHandler)
+        withContext(consumerContext) {
+            _consumer.commitAsync(nextMessageOffsetsToCommit, offsetCommitErrorHandler)
+        }
     }
 
-    private fun runConsumer() {
+    private suspend fun runConsumer() {
         // initialize the consumer based on the configuration
         val producerProperties = Properties().apply {
             put(ConsumerConfig.GROUP_ID_CONFIG, config.group)
@@ -121,8 +146,8 @@ class KafkaConsumer(
             _consumer.subscribe(config.topics, rebalanceListener)
         }
         _consumer.use { consumer ->
-            while (true) {
-                val records: ConsumerRecords<String, ByteArray> = consumer.poll(Duration.ofMillis(config.pollTimeoutMs))
+            while (!stopRequested) {
+                val records: ConsumerRecords<String, ByteArray> = if (isPaused) ConsumerRecords(emptyMap()) else consumer.poll(Duration.ofMillis(config.pollTimeoutMs))
                 val batchCount = records.count()
 
                 try {
@@ -142,20 +167,20 @@ class KafkaConsumer(
                         },
                     )
                 } catch (throwable: Throwable) {
-                    uncaughtErrorHandler(KafkaError(throwable, kafkaMessage, config.skipErrors))
+                    uncaughtErrorHandler(KafkaError(throwable, null, config.skipErrors))
                 }
 
                 consumer.takeIf { config.autoCommitOffsets && batchCount > 0 }?.commitAsync(offsetCommitErrorHandler)
 
-                if (stopRequested) {
-                    stopCompleted.complete(Unit)
-                    return
-                }
+                // Add delay to pause the thread for commits to happen
+                delay(1)
             }
+
+            stopCompleted.complete(Unit)
         }
     }
 
-    private val offsetCommitErrorHandler = { _: Map<TopicPartition, OffsetAndMetadata>, exception: Exception ->
+    private val offsetCommitErrorHandler = { _: Map<TopicPartition, OffsetAndMetadata>, exception: Exception? ->
         // if too many consecutive errors occur committing, shut down and let the container restart it
         if (exception != null) commitErrorCount++ else commitErrorCount = 0
         if (commitErrorCount > config.maxCommitErrors) {
@@ -164,7 +189,6 @@ class KafkaConsumer(
             sleep(100)
             Runtime.getRuntime().halt(1)
         }
-
     }
 
     private val rebalanceListener =

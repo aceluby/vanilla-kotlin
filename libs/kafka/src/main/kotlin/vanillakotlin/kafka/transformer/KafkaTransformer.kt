@@ -5,12 +5,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.slf4j.LoggerFactory
 import vanillakotlin.kafka.APP_TAG
@@ -26,8 +27,8 @@ import vanillakotlin.kafka.consumer.ErrorHandler
 import vanillakotlin.kafka.consumer.KafkaConsumer
 import vanillakotlin.kafka.consumer.KafkaError
 import vanillakotlin.kafka.consumer.runtimeErrorHandler
-import vanillakotlin.kafka.models.KafkaMessage
 import vanillakotlin.kafka.models.KafkaConsumerSequenceHandler
+import vanillakotlin.kafka.models.KafkaMessage
 import vanillakotlin.kafka.models.TopicPartitionOffset
 import vanillakotlin.kafka.producer.KafkaProducer
 import vanillakotlin.kafka.producer.PartitionCalculator
@@ -74,6 +75,8 @@ class KafkaTransformer<OUT>(
         val transformerResult: List<Pair<TransformerMessage<OUT>, CompletableFuture<out RecordMetadata?>>>,
     )
 
+    private val transformerScope = CoroutineScope(Dispatchers.Unconfined)
+
     private lateinit var workersChannels: List<Channel<Pair<KafkaMessage, CompletableDeferred<TransformResult<OUT>>>>>
     private lateinit var kafkaPublisherChannel: Channel<CompletableDeferred<TransformResult<OUT>>>
     private lateinit var kafkaAckChannel: Channel<EventResult<OUT>>
@@ -81,6 +84,7 @@ class KafkaTransformer<OUT>(
 
     private val consumerEventHandler = KafkaConsumerSequenceHandler { seq ->
         seq.forEach { kafkaMessage ->
+            println(String(kafkaMessage.body ?: ByteArray(0)))
             val deferred = CompletableDeferred<TransformResult<OUT>>()
             runBlocking {
                 workersChannels[workerSelector.selectWorker(kafkaMessage.key)].send(kafkaMessage to deferred)
@@ -97,6 +101,7 @@ class KafkaTransformer<OUT>(
         config = producerConfig,
         publishTimerMetric = publishTimerMetric,
         partitionFor = partitionFor,
+        agentName = consumerConfig.appName,
     )
 
     // Worker that transforms the event and completes the transformation event
@@ -206,22 +211,20 @@ class KafkaTransformer<OUT>(
         return mergedChannel to tickerJob
     }
 
-    // Periodically commits the offsets for the next message to be consumed to kafka using the same consumer thread as the polling job
-    private fun CoroutineScope.launchPeriodicCommitter(
-        tickerChannel: ReceiveChannel<Unit>,
-    ) = launch(sourceConsumer.consumerThread.asCoroutineDispatcher()) {
+    // Periodically commits the offsets for the next message to be consumed to kafka using the same thread as the consumer
+    private fun CoroutineScope.launchPeriodicCommitter(tickerChannel: ReceiveChannel<Unit>) = launch(Dispatchers.IO) {
         log.atDebug().log { "Launching periodicCommitter on thread ${Thread.currentThread()} for ${consumerConfig.topics}" }
         for (unit in tickerChannel) {
             sourceConsumer.commitOffsets()
         }
     }
 
-    fun start() = runBlocking {
+    fun start() {
         log.atInfo().log("Starting transformer consumer for ${consumerConfig.topics} with $numberOfWorkers workers")
         // Start up the channels
         kafkaPublisherChannel = Channel(numberOfWorkers * WORKER_CHANNEL_SIZE)
         kafkaAckChannel = Channel(ACK_CHANNEL_SIZE)
-        val ticker = pokableTicker(COMMITTER_PERIOD_MS)
+        val ticker = transformerScope.pokableTicker(COMMITTER_PERIOD_MS)
         tickerChannel = ticker.first
         tickerJob = ticker.second
         if (workerSelector is RoundRobinWorkerSelector) {
@@ -229,17 +232,17 @@ class KafkaTransformer<OUT>(
             // RoundRobinWorkerSelector will always send to worker channel 0
             workersChannels = listOf(Channel(WORKER_CHANNEL_SIZE * numberOfWorkers))
             eventWorkers = (0..<numberOfWorkers).map { workerIndex ->
-                launchEventWorker(workersChannels[0], workerIndex)
+                transformerScope.launchEventWorker(workersChannels[0], workerIndex)
             }
         } else {
             workersChannels = List(numberOfWorkers) { Channel(WORKER_CHANNEL_SIZE) }
-            eventWorkers = workersChannels.mapIndexed { index, channel -> launchEventWorker(channel, index) }
+            eventWorkers = workersChannels.mapIndexed { index, channel -> transformerScope.launchEventWorker(channel, index) }
         }
 
         // Start the jobs
-        commitJob = launchPeriodicCommitter(tickerChannel)
-        kafkaAckJob = launchKafkaAckJob(kafkaAckChannel)
-        kafkaPublishJob = launchKafkaPublisher(kafkaPublisherChannel, kafkaAckChannel)
+        commitJob = transformerScope.launchPeriodicCommitter(tickerChannel)
+        kafkaAckJob = transformerScope.launchKafkaAckJob(kafkaAckChannel)
+        kafkaPublishJob = transformerScope.launchKafkaPublisher(kafkaPublisherChannel, kafkaAckChannel)
         // Start the consumer and producer
         sourceConsumer.start()
         sinkProducer.start()
@@ -247,17 +250,31 @@ class KafkaTransformer<OUT>(
 
     override fun close() = runBlocking {
         log.atInfo().log { "Shutting down transformer" }
-        sourceConsumer.stop()
+        sourceConsumer.togglePause()
         workersChannels.forEach { it.close() }
         eventWorkers.forEach { it.join() }
         kafkaPublisherChannel.close()
         kafkaPublishJob.join()
         kafkaAckChannel.close()
         kafkaAckJob.join()
+
+        // Cancel the ticker job first to stop new ticks
         tickerJob.cancel()
-        tickerChannel.send(Unit)
+
+        // Send final tick and close the channel
+        tickerChannel.trySend(Unit)
         tickerChannel.close()
-        commitJob.join()
+
+        // Wait for committer to finish with a timeout
+        try {
+            withTimeout(5000) {
+                commitJob.join()
+            }
+        } catch (e: TimeoutCancellationException) {
+            log.atWarn().log { "Committer job did not finish within timeout, canceling" }
+            commitJob.cancel()
+        }
+
         sourceConsumer.stop()
         sinkProducer.close()
         log.atInfo().log { "Transformer shut down" }

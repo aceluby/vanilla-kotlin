@@ -92,18 +92,17 @@ class OtelMetrics(
         name: String,
         tags: Map<String, String>,
         supplier: () -> Number?,
-    ): ObservableDoubleGauge =
-        gauges.getOrPut(name) {
-            meter.gaugeBuilder(name)
-                .setDescription("")
-                .setUnit("unit")
-                .buildWithCallback {
-                    it.record(
-                        supplier()?.toDouble() ?: Double.NaN,
-                        Attributes.builder().apply { (config.tags + tags).map { (k, v) -> put(AttributeKey.stringKey(k), v) } }.build(),
-                    )
-                }
-        }
+    ): ObservableDoubleGauge = gauges.getOrPut(name) {
+        meter.gaugeBuilder(name)
+            .setDescription("")
+            .setUnit("unit")
+            .buildWithCallback {
+                it.record(
+                    supplier()?.toDouble() ?: Double.NaN,
+                    Attributes.builder().apply { (config.tags + tags).map { (k, v) -> put(AttributeKey.stringKey(k), v) } }.build(),
+                )
+            }
+    }
 }
 
 fun PublishTimerMetric.time(

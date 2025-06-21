@@ -17,6 +17,8 @@ dependencies {
 
     testImplementation(testFixtures(project(":libs:db")))
     testImplementation(testFixtures(project(":libs:common")))
+    testImplementation(testFixtures(project(":libs:kafka")))
+    testImplementation(libs.kafka.client)
 }
 
 tasks {

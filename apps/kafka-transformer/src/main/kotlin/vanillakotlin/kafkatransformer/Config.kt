@@ -1,7 +1,7 @@
 package vanillakotlin.kafkatransformer
 
 import vanillakotlin.http.clients.ConnectionConfig
-import vanillakotlin.http.clients.item.ItemGateway
+import vanillakotlin.http.clients.thing.ThingGateway
 import vanillakotlin.http.interceptors.RetryInterceptor
 import vanillakotlin.kafka.consumer.KafkaConsumer
 import vanillakotlin.kafka.producer.KafkaProducer
@@ -23,10 +23,10 @@ data class Config(
         )
 
         data class ClientConfig(
-            val item: ItemConfig,
+            val thing: ThingConfig,
         ) {
-            data class ItemConfig(
-                val gateway: ItemGateway.Config,
+            data class ThingConfig(
+                val gateway: ThingGateway.Config,
                 val connection: ConnectionConfig,
                 val retry: RetryInterceptor.Config,
             )

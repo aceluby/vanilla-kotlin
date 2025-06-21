@@ -1,6 +1,6 @@
 package vanillakotlin.outboxprocessor
 
-import com.target.liteforjdbc.DbConfig
+import vanillakotlin.db.DbConfig
 import vanillakotlin.kafka.producer.KafkaProducer
 import vanillakotlin.metrics.OtelMetrics
 
@@ -26,5 +26,3 @@ data class Config(
         val producer: KafkaProducer.Config,
     )
 }
-
-

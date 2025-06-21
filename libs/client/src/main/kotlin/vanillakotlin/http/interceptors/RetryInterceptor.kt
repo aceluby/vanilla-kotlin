@@ -1,13 +1,12 @@
 package vanillakotlin.http.interceptors
 
-
-import vanillakotlin.metrics.PublishCounterMetric
 import io.github.resilience4j.core.IntervalFunction
 import io.github.resilience4j.kotlin.retry.RetryConfig
 import io.github.resilience4j.kotlin.retry.RetryRegistry
 import io.github.resilience4j.retry.Retry
 import okhttp3.Interceptor
 import okhttp3.Response
+import vanillakotlin.metrics.PublishCounterMetric
 
 class RetryInterceptor(
     private val config: Config,
@@ -21,21 +20,21 @@ class RetryInterceptor(
     )
 
     private val retrySupplier = RetryConfig<Response> {
-            maxAttempts(config.maxAttempts)
-            intervalFunction(IntervalFunction.ofExponentialBackoff(config.initialRetryDelayMs, 2.0, config.maxRetryDelayMs))
-            retryOnResult { response -> with(response) { code >= 500 || code in config.retryNonErrorCodes } }
-            consumeResultBeforeRetryAttempt { _, response ->
-                val telemetryTag = response.request.tag(TelemetryTag::class.java)
-                if (telemetryTag != null) {
-                    publishCounterMetric("http.request.retry.count", telemetryTag.metricTags)
-                }
-                response.close()
+        maxAttempts(config.maxAttempts)
+        intervalFunction(IntervalFunction.ofExponentialBackoff(config.initialRetryDelayMs, 2.0, config.maxRetryDelayMs))
+        retryOnResult { response -> with(response) { code >= 500 || code in config.retryNonErrorCodes } }
+        consumeResultBeforeRetryAttempt { _, response ->
+            val telemetryTag = response.request.tag(TelemetryTag::class.java)
+            if (telemetryTag != null) {
+                publishCounterMetric("http.request.retry.count", telemetryTag.metricTags)
             }
-        }.let { retryConfig ->
-            RetryRegistry { withRetryConfig(retryConfig) }.retry("okhttp")
-        }.let { retry ->
-            Retry.decorateCheckedFunction(retry) { chain: Interceptor.Chain -> with(chain) { proceed(request()) } }
+            response.close()
         }
+    }.let { retryConfig ->
+        RetryRegistry { withRetryConfig(retryConfig) }.retry("okhttp")
+    }.let { retry ->
+        Retry.decorateCheckedFunction(retry) { chain: Interceptor.Chain -> with(chain) { proceed(request()) } }
+    }
 
     override fun intercept(chain: Interceptor.Chain): Response = retrySupplier.apply(chain)
 }

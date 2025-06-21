@@ -71,11 +71,16 @@ class FreshFilter(
             return FilterStatus.STALE
         }
 
-        updateStorage(message)
-
         val savedValueHash = savedBytes.takeLast(savedBytes.size - Long.SIZE_BYTES).toByteArray()
 
-        return if (message.valueHash.contentEquals(savedValueHash)) FilterStatus.REDUNDANT else FilterStatus.NEW
+        // Check if this is the same message (same timestamp and hash)
+        if (savedTimestamp == message.timestamp && message.valueHash.contentEquals(savedValueHash)) {
+            return FilterStatus.REDUNDANT
+        }
+
+        // This is a new message (newer timestamp or different hash)
+        updateStorage(message)
+        return FilterStatus.NEW
     }
 
     private fun updateStorage(message: FreshFilterable) {

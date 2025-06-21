@@ -1,6 +1,6 @@
 package vanillakotlin.bulkinserter
 
-import com.target.liteforjdbc.DbConfig
+import vanillakotlin.db.DbConfig
 import vanillakotlin.kafka.consumer.KafkaConsumer
 import vanillakotlin.metrics.OtelMetrics
 

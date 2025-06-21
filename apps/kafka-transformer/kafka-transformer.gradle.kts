@@ -16,4 +16,6 @@ dependencies {
     implementation(project(":libs:metrics"))
     testImplementation(libs.okhttp.mock.server)
     testImplementation(testFixtures(project(":libs:common")))
+    testImplementation(testFixtures(project(":libs:kafka")))
+    testImplementation(libs.kafka.client)
 }

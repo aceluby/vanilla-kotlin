@@ -4,13 +4,17 @@ import io.kotest.extensions.system.withEnvironment
 import io.kotest.extensions.system.withSystemProperty
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import vanillakotlin.config.loadConfig
+import vanillakotlin.random.randomString
 
 // configuration can be both strongly typed and tested
 class ConfigTest {
 
     @Test fun `default config`() {
-        val config = loadConfig<Config>()
-        config.metrics.tags["team"] shouldBe "reference" // default value in the MetricsPublisher.Config class
+        withEnvironment("CI", "true") {
+            val config = loadConfig<Config>()
+            config.metrics.tags["team"] shouldBe "test" // default value in the default.conf file
+        }
     }
 
     @Test fun `system property config override`() {

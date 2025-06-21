@@ -4,52 +4,49 @@ import org.rocksdb.RocksIterator
 import java.nio.ByteBuffer
 import vanillakotlin.rocksdb.core.map as disposableMap
 
-internal fun RocksIterator.getPrefixed(prefix: ByteArray): Disposable<Sequence<KeyValuePair>> =
-    Disposable.from(this).disposableMap { iterator ->
-        sequence {
-            iterator.seek(prefix)
+internal fun RocksIterator.getPrefixed(prefix: ByteArray): Disposable<Sequence<KeyValuePair>> = Disposable.from(this).disposableMap { iterator ->
+    sequence {
+        iterator.seek(prefix)
 
-            while (iterator.isValid) {
-                val key = iterator.key()
-                if (!key.startsWith(prefix)) {
-                    break
-                }
-
-                yield(KeyValuePair(key, iterator.value()))
-                iterator.next()
+        while (iterator.isValid) {
+            val key = iterator.key()
+            if (!key.startsWith(prefix)) {
+                break
             }
+
+            yield(KeyValuePair(key, iterator.value()))
+            iterator.next()
         }
     }
+}
 
 internal fun RocksIterator.getRange(
     startKey: ByteArray,
     endKey: ByteArray,
-): Disposable<Sequence<KeyValuePair>> =
-    Disposable.from(this).disposableMap { iterator ->
-        sequence {
-            iterator.seek(startKey)
-            var key = iterator.key()
+): Disposable<Sequence<KeyValuePair>> = Disposable.from(this).disposableMap { iterator ->
+    sequence {
+        iterator.seek(startKey)
+        var key = iterator.key()
 
-            while (iterator.isValid && key <= endKey) {
-                yield(KeyValuePair(key, iterator.value()))
-                iterator.next()
-                key = iterator.key()
-            }
+        while (iterator.isValid && key <= endKey) {
+            yield(KeyValuePair(key, iterator.value()))
+            iterator.next()
+            key = iterator.key()
         }
     }
+}
 
-internal fun RocksIterator.sequence(): Disposable<Sequence<KeyValuePair>> =
-    Disposable.from(this).disposableMap { iterator ->
-        sequence {
-            iterator.seekToFirst()
+internal fun RocksIterator.sequence(): Disposable<Sequence<KeyValuePair>> = Disposable.from(this).disposableMap { iterator ->
+    sequence {
+        iterator.seekToFirst()
 
-            while (iterator.isValid) {
-                val key = iterator.key()
-                yield(KeyValuePair(key, iterator.value()))
-                iterator.next()
-            }
+        while (iterator.isValid) {
+            val key = iterator.key()
+            yield(KeyValuePair(key, iterator.value()))
+            iterator.next()
         }
     }
+}
 
 fun ByteBuffer.size() = this.remaining()
 

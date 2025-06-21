@@ -1,6 +1,6 @@
 package vanillakotlin.outboxprocessor
 
-import com.target.liteforjdbc.Db
+import org.jdbi.v3.core.Jdbi
 import org.slf4j.LoggerFactory
 import vanillakotlin.db.repository.popOutbox
 import vanillakotlin.kafka.models.KafkaOutputMessage
@@ -24,7 +24,7 @@ val shutdownErrorHandler = { throwable: Throwable ->
 
 class OutboxProcessor(
     private val config: Config,
-    private val db: Db,
+    private val jdbi: Jdbi,
     private val kafkaSendAsync: KafkaSendAsync<ByteArray?>,
     private val uncaughtErrorHandler: UncaughtErrorHandler = shutdownErrorHandler,
 ) {
@@ -55,8 +55,8 @@ class OutboxProcessor(
      * If there's an exception, the transaction will rollback and throw the exception.
      */
     fun popAndSend() {
-        db.withTransaction { tx ->
-            val messages = popOutbox(tx, config.popMessageLimit)
+        jdbi.inTransaction<Unit, Exception> { handle ->
+            val messages = popOutbox(handle, config.popMessageLimit)
             messages.map { message ->
                 log.atDebug().log("Sending message")
 

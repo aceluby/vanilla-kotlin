@@ -15,6 +15,9 @@ dependencies {
     implementation(project(":libs:metrics"))
     implementation(project(":libs:http4k"))
     testImplementation(testFixtures(project(":libs:common")))
+    testImplementation(testFixtures(project(":libs:kafka")))
+    testImplementation(testFixtures(project(":libs:db")))
+    testImplementation(libs.kafka.client)
 }
 
 tasks {
