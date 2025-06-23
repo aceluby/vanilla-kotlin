@@ -16,20 +16,18 @@ import java.sql.ResultSet
 fun insertOutbox(
     handle: Handle,
     outbox: Outbox,
-): Outbox {
-    return handle.createQuery(
-        """
+): Outbox = handle.createQuery(
+    """
         INSERT INTO outbox (message_key, headers, body) 
         VALUES (:messageKey, :headers, :body) 
         RETURNING *
-        """.trimIndent(),
-    )
-        .bind("messageKey", outbox.messageKey)
-        .bind("headers", mapper.writeValueAsBytes(outbox.headers))
-        .bind("body", outbox.body)
-        .mapTo(Outbox::class.java)
-        .single()
-}
+    """.trimIndent(),
+)
+    .bind("messageKey", outbox.messageKey)
+    .bind("headers", mapper.writeValueAsBytes(outbox.headers))
+    .bind("body", outbox.body)
+    .mapTo(Outbox::class.java)
+    .single()
 
 fun popOutbox(
     handle: Handle,
@@ -53,15 +51,13 @@ class OutboxMapper : RowMapper<Outbox> {
     override fun map(
         rs: ResultSet,
         ctx: StatementContext,
-    ): Outbox {
-        return Outbox(
-            id = rs.getLong("id"),
-            messageKey = rs.getString("message_key"),
-            headers = mapper.readValue(rs.getBytes("headers")),
-            body = rs.getBytes("body"),
-            createdTs = rs.getTimestamp("created_ts").toInstant(),
-        )
-    }
+    ): Outbox = Outbox(
+        id = rs.getLong("id"),
+        messageKey = rs.getString("message_key"),
+        headers = mapper.readValue(rs.getBytes("headers")),
+        body = rs.getBytes("body"),
+        createdTs = rs.getTimestamp("created_ts").toInstant(),
+    )
 }
 
 fun mapToOutbox(resultSet: ResultSet): Outbox = with(resultSet) {

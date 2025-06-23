@@ -56,19 +56,15 @@ class RocksDbStore(
         start: ByteArray,
         end: ByteArray,
         block: (sequence: Sequence<KeyValuePair>) -> Unit,
-    ) {
-        return db.newIterator().getRange(start, end).use { disposable ->
-            block(disposable.value())
-        }
+    ) = db.newIterator().getRange(start, end).use { disposable ->
+        block(disposable.value())
     }
 
     fun withPrefixed(
         start: ByteArray,
         block: (sequence: Sequence<KeyValuePair>) -> Unit,
-    ) {
-        return db.newIterator().getPrefixed(start).use { disposable ->
-            block(disposable.value())
-        }
+    ) = db.newIterator().getPrefixed(start).use { disposable ->
+        block(disposable.value())
     }
 
     fun withSequence(block: (sequence: Sequence<KeyValuePair>) -> Unit) {

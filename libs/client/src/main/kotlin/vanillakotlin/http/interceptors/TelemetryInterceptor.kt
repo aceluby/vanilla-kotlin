@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory
 import vanillakotlin.metrics.PublishTimerMetric
 import kotlin.time.Duration.Companion.milliseconds
 
-class TelemetryInterceptor(
-    private val publishTimerMetric: PublishTimerMetric,
-) : Interceptor {
+class TelemetryInterceptor(private val publishTimerMetric: PublishTimerMetric) : Interceptor {
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun intercept(chain: Interceptor.Chain): Response {

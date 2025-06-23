@@ -20,6 +20,5 @@ sealed class TransformerMessages<V>(val messages: List<TransformerMessage<V>>) {
 
     class Multiple<V>(messages: List<TransformerMessage<V>>) : TransformerMessages<V>(messages)
 
-    class Dropped<V>(metricTags: Map<String, String> = emptyMap()) :
-        TransformerMessages<V>(listOf(TransformerMessage(KafkaOutputMessage(null, null), metricTags)))
+    class Dropped<V>(metricTags: Map<String, String> = emptyMap()) : TransformerMessages<V>(listOf(TransformerMessage(KafkaOutputMessage(null, null), metricTags)))
 }

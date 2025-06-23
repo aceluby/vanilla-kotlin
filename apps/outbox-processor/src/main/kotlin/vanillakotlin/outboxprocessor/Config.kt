@@ -14,15 +14,9 @@ data class Config(
     val kafka: KafkaConfig,
     val outbox: OutboxProcessor.Config,
 ) {
-    data class HttpConfig(
-        val server: HttpServerConfig,
-    ) {
-        data class HttpServerConfig(
-            val port: Int,
-        )
+    data class HttpConfig(val server: HttpServerConfig) {
+        data class HttpServerConfig(val port: Int)
     }
 
-    data class KafkaConfig(
-        val producer: KafkaProducer.Config,
-    )
+    data class KafkaConfig(val producer: KafkaProducer.Config)
 }

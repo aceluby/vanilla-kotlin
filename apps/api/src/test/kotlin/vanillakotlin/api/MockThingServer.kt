@@ -26,11 +26,9 @@ class MockThingServer {
         """.trimIndent()
 
     private inner class ThingDispatcher : Dispatcher() {
-        override fun dispatch(request: RecordedRequest): MockResponse {
-            return when {
-                request.path?.startsWith("/things/") == true -> MockResponse().setResponseCode(200).setBody(sampleThingResponse)
-                else -> MockResponse().setResponseCode(404)
-            }
+        override fun dispatch(request: RecordedRequest): MockResponse = when {
+            request.path?.startsWith("/things/") == true -> MockResponse().setResponseCode(200).setBody(sampleThingResponse)
+            else -> MockResponse().setResponseCode(404)
         }
     }
 

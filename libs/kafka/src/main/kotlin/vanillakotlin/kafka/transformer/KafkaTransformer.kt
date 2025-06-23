@@ -54,7 +54,8 @@ class KafkaTransformer<OUT>(
     // Overwrite if you would like to implement a poison/DLQ pattern
     private val uncaughtErrorHandler: ErrorHandler = runtimeErrorHandler(),
     partitionFor: (String?, Int) -> Int? = PartitionCalculator.Companion::partitionFor,
-) : HealthMonitor, AutoCloseable {
+) : HealthMonitor,
+    AutoCloseable {
 
     override val name = consumerConfig.appName
     override fun check(): HealthCheckResponse = sourceConsumer.check()

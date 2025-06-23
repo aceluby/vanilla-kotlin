@@ -15,9 +15,7 @@ import vanillakotlin.serde.mapper
  * It then gets additional thing information and publishes a message to another topic with the augmented data.
  * Follows fail-fast architecture - any errors will cause the app to shut down.
  */
-class FavoriteThingsEventHandler(
-    private val getThingDetails: GetThingDetails,
-) : TransformerEventHandler<UserFavoriteThing> {
+class FavoriteThingsEventHandler(private val getThingDetails: GetThingDetails) : TransformerEventHandler<UserFavoriteThing> {
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun transform(kafkaMessage: KafkaMessage): TransformerMessages<UserFavoriteThing> {

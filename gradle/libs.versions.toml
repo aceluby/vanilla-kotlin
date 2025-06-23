@@ -1,36 +1,32 @@
 [versions]
 flyway = "10.11.0"
-guava = "33.1.0-jre"
-hoplite = "2.7.5"
-hoplite-config-loader = "1.7.0"
-http4k = "6.7.0.0"
-jackson = "2.17.0"
-jdbi = "3.44.0"
-jupiter = "5.10.2"
+hoplite = "2.9.0"
+http4k = "6.15.0.1"
+jackson = "2.19.1"
+jdbi = "3.49.5"
+jupiter = "5.13.1"
 kasechange = "1.4.1"
-kotest = "5.8.1"
-kotlin-core = "2.0.0"
-kotlin-coroutines = "1.8.0"
-mockk = "1.13.10"
+kotest = "5.9.1"
+kotlin-core = "2.1.21"
+kotlin-coroutines = "1.10.2"
+mockk = "1.14.4"
 okhttp = "4.12.0"
-postgresql = "42.7.3"
-resilience4j = "2.2.0"
-spotless = "6.25.0"
-otel = "1.44.1"
-slf4j = "2.0.6"
-logback = "1.4.14"
-logback-encoder = "7.2"
+postgresql = "42.7.7"
+resilience4j = "2.3.0"
+spotless = "7.0.4"
+otel = "1.51.0"
+slf4j = "2.0.17"
+logback = "1.5.18"
+logback-encoder = "8.1"
 kafka = "3.9.0"
-rocksdb = "8.11.4"
+rocksdb = "10.2.1"
+versions = "0.52.0"
 
 [libraries]
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
-
-hoplite-config-loader = { module = "toolshed:hoplite-config-loader", version.ref = "hoplite-config-loader" }
 hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version.ref = "hoplite" }
 hoplite-hocon = { module = "com.sksamuel.hoplite:hoplite-hocon", version.ref = "hoplite" }
 
@@ -50,7 +46,6 @@ jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin"
 jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
 jdbi-kotlin = { module = "org.jdbi:jdbi3-kotlin", version.ref = "jdbi" }
 jdbi-postgres = { module = "org.jdbi:jdbi3-postgres", version.ref = "jdbi" }
-jdbi-jackson2 = { module = "org.jdbi:jdbi3-jackson2", version.ref = "jdbi" }
 
 jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "jupiter" }
 jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "jupiter" }
@@ -61,10 +56,8 @@ kasechange = { module = "net.pearx.kasechange:kasechange", version.ref = "kasech
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-assertions-json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
 kotest-extensions = { module = "io.kotest:kotest-extensions", version.ref = "kotest" }
-kotest-framework = { module = "io.kotest:kotest-framework-api-jvm", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
-kotest-runner-jvm = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
 
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 
@@ -114,13 +107,10 @@ jackson = [
 jdbi = [
     "jdbi-core",
     "jdbi-kotlin",
-    "jdbi-postgres",
-    "jdbi-jackson2"
+    "jdbi-postgres"
 ]
 
 jupiter = ["jupiter-api", "jupiter-engine", "jupiter-params"]
-
-kotest = ["kotest-assertions-core", "kotest-runner-junit5"]
 
 testing = [
     "jupiter-api",
@@ -157,3 +147,4 @@ logging = [
 
 [plugins]
 flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }

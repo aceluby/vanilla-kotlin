@@ -150,12 +150,10 @@ class FavoriteThingMapper : RowMapper<FavoriteThing> {
     override fun map(
         rs: ResultSet,
         ctx: StatementContext,
-    ): FavoriteThing {
-        return FavoriteThing(
-            id = rs.getLong("id"),
-            thingIdentifier = rs.getString("thing"),
-            createdTs = rs.getTimestamp("created_ts").toLocalDateTime(),
-            updatedTs = rs.getTimestamp("updated_ts").toLocalDateTime(),
-        )
-    }
+    ): FavoriteThing = FavoriteThing(
+        id = rs.getLong("id"),
+        thingIdentifier = rs.getString("thing"),
+        createdTs = rs.getTimestamp("created_ts").toLocalDateTime(),
+        updatedTs = rs.getTimestamp("updated_ts").toLocalDateTime(),
+    )
 }

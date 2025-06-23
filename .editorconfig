@@ -5,5 +5,11 @@ ij_kotlin_name_count_to_use_star_import = 99
 ij_kotlin_name_count_to_use_star_import_for_members = 99
 max_line_length = 180
 
+# ktlint rules for parameter formatting
+ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 2
+ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 2
+ktlint_standard_parameter-list-wrapping = enabled
+ktlint_standard_wrapping = enabled
+
 [*gradle.kts]
 max_line_length = off

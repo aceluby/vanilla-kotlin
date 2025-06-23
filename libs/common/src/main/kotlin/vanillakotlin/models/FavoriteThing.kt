@@ -10,17 +10,13 @@ data class FavoriteThing(
     val updatedTs: LocalDateTime = LocalDateTime.now(),
     val isDeleted: Boolean = false,
 ) {
-    fun buildOutbox(): Outbox {
-        return Outbox(
-            messageKey = thingIdentifier,
-            body = mapper.writeValueAsBytes(this),
-        )
-    }
-}
-
-fun buildDeletedOutbox(thingIdentifier: ThingIdentifier): Outbox {
-    return Outbox(
+    fun buildOutbox(): Outbox = Outbox(
         messageKey = thingIdentifier,
-        body = mapper.writeValueAsBytes(FavoriteThing(thingIdentifier = thingIdentifier, isDeleted = true)),
+        body = mapper.writeValueAsBytes(this),
     )
 }
+
+fun buildDeletedOutbox(thingIdentifier: ThingIdentifier): Outbox = Outbox(
+    messageKey = thingIdentifier,
+    body = mapper.writeValueAsBytes(FavoriteThing(thingIdentifier = thingIdentifier, isDeleted = true)),
+)

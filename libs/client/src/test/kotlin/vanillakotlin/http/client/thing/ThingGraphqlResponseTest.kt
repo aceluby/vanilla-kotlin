@@ -146,4 +146,4 @@ class ThingGraphqlResponseTest {
         assertEquals("Expensive Product", result?.productName)
         assertEquals(999999.99, result?.sellingPrice)
     }
-} 
+}

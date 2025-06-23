@@ -289,11 +289,9 @@ class TelemetryInterceptorTest {
         )
     }
 
-    private fun createClientWithTelemetryInterceptor(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(TelemetryInterceptor(metricsPublisher::publishTimerMetric))
-            .build()
-    }
+    private fun createClientWithTelemetryInterceptor(): OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(TelemetryInterceptor(metricsPublisher::publishTimerMetric))
+        .build()
 
     private fun createRequestWithTelemetryTag(
         service: String = "test-service",
@@ -323,4 +321,4 @@ class TelemetryInterceptorTest {
             timers.add(TimerMetric(name, tags, duration))
         }
     }
-} 
+}

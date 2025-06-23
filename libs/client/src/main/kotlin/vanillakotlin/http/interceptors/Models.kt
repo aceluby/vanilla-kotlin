@@ -3,7 +3,10 @@ package vanillakotlin.http.interceptors
 /**
  * Tag used for caching. Everything here will be used to generate a cache key.
  */
-data class CacheTag(val context: String, val key: String) {
+data class CacheTag(
+    val context: String,
+    val key: String,
+) {
     fun cacheKey(): String = "$context:$key"
 }
 

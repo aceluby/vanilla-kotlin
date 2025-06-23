@@ -58,8 +58,15 @@ class KafkaTransformerTest {
         return topicName
     }
 
-    data class TestMessage(val id: String, val content: String)
-    data class TransformedMessage(val originalId: String, val transformedContent: String, val processed: Boolean = true)
+    data class TestMessage(
+        val id: String,
+        val content: String,
+    )
+    data class TransformedMessage(
+        val originalId: String,
+        val transformedContent: String,
+        val processed: Boolean = true,
+    )
 
     @Test fun `should transform and forward single message`() {
         val sourceTopicName = createTestTopic()

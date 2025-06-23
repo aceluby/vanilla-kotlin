@@ -10,15 +10,9 @@ data class Config(
     val kafka: KafkaConfig,
     val db: DbConfig,
 ) {
-    data class HttpConfig(
-        val server: HttpServerConfig,
-    ) {
-        data class HttpServerConfig(
-            val port: Int,
-        )
+    data class HttpConfig(val server: HttpServerConfig) {
+        data class HttpServerConfig(val port: Int)
     }
 
-    data class KafkaConfig(
-        val consumer: KafkaConsumer.Config,
-    )
+    data class KafkaConfig(val consumer: KafkaConsumer.Config)
 }

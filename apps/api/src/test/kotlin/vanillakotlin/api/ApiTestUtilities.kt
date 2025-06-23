@@ -16,33 +16,27 @@ import vanillakotlin.random.randomUsername
 fun buildTestHandler(
     healthMonitors: List<HealthMonitor> = emptyList(),
     contractRoute: ContractRoute? = null,
-): HttpHandler {
-    return buildServerHandler(port = 0) {
-        healthMonitors { +healthMonitors }
-        corsMode = CorsMode.ALLOW_ALL
+): HttpHandler = buildServerHandler(port = 0) {
+    healthMonitors { +healthMonitors }
+    corsMode = CorsMode.ALLOW_ALL
 
-        if (contractRoute != null) {
-            contract {
-                apiInfo = ApiInfo("Test API", "1.0")
-                routes {
-                    +contractRoute
-                }
+    if (contractRoute != null) {
+        contract {
+            apiInfo = ApiInfo("Test API", "1.0")
+            routes {
+                +contractRoute
             }
         }
     }
 }
 
 // Convenience function for tests to append authentication headers to requests
-fun Request.addAuth(username: String = randomUsername()): Request {
-    return this
-        .header("X-ID", username)
-        .header("X-EMAIL", "$username@host.com")
-        .header("X-MEMBER-OF", "standard-user")
-}
+fun Request.addAuth(username: String = randomUsername()): Request = this
+    .header("X-ID", username)
+    .header("X-EMAIL", "$username@host.com")
+    .header("X-MEMBER-OF", "standard-user")
 
-fun Request.addAdminAuth(username: String = randomUsername()): Request {
-    return this
-        .header("X-ID", username)
-        .header("X-EMAIL", "$username@host.com")
-        .header("X-MEMBER-OF", "admin-user")
-}
+fun Request.addAdminAuth(username: String = randomUsername()): Request = this
+    .header("X-ID", username)
+    .header("X-EMAIL", "$username@host.com")
+    .header("X-MEMBER-OF", "admin-user")

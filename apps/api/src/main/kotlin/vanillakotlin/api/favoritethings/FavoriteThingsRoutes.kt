@@ -34,22 +34,16 @@ data class FavoriteThingResponse(
 )
 
 // Extension function to convert Thing to FavoriteThingResponse
-fun Thing.toFavoriteThingResponse(): FavoriteThingResponse {
-    return FavoriteThingResponse(
-        thingIdentifier = this.id,
-        sellingPrice = this.sellingPrice,
-        productName = this.productName,
-    )
-}
+fun Thing.toFavoriteThingResponse(): FavoriteThingResponse = FavoriteThingResponse(
+    thingIdentifier = this.id,
+    sellingPrice = this.sellingPrice,
+    productName = this.productName,
+)
 
 // Extension functions for auth checking
-private fun Request.hasAuth(): Boolean {
-    return this.header("X-ID") != null && this.header("X-EMAIL") != null && this.header("X-MEMBER-OF") != null
-}
+private fun Request.hasAuth(): Boolean = this.header("X-ID") != null && this.header("X-EMAIL") != null && this.header("X-MEMBER-OF") != null
 
-private fun Request.hasAdminAuth(): Boolean {
-    return hasAuth() && this.header("X-MEMBER-OF") == "admin-user"
-}
+private fun Request.hasAdminAuth(): Boolean = hasAuth() && this.header("X-MEMBER-OF") == "admin-user"
 
 // Individual route functions
 fun postFavoriteThingsRoute(saveFavoriteThing: SaveFavoriteThing): RoutingHttpHandler {

@@ -36,7 +36,10 @@ private sealed class SafeDisposable<T> : Disposable<T> {
     }
 }
 
-private class WrappedDisposable<T>(private val wrapped: T, private val onClose: () -> Unit) : SafeDisposable<T>() {
+private class WrappedDisposable<T>(
+    private val wrapped: T,
+    private val onClose: () -> Unit,
+) : SafeDisposable<T>() {
     override fun value() = wrapped
 
     override fun close() = safeClose { onClose() }

@@ -122,9 +122,7 @@ class KafkaProducer<V>(
         }
     }
 
-    inner class CompletableCallback(
-        private val metricsTags: Map<String, String>,
-    ) : Callback {
+    inner class CompletableCallback(private val metricsTags: Map<String, String>) : Callback {
         val completableFuture = CompletableFuture<RecordMetadata>()
         private val instantiatedAt = System.currentTimeMillis()
 

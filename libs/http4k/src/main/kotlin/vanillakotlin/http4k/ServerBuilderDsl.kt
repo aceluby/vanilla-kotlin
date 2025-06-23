@@ -31,7 +31,10 @@ import vanillakotlin.serde.mapper
 annotation class Http4kServerMarker
 
 @Http4kServerMarker
-class ServerBuilder internal constructor(private val host: String, private val port: Int) {
+class ServerBuilder internal constructor(
+    private val host: String,
+    private val port: Int,
+) {
     init {
         Jackson.mapper
             // This the default naming strategy that should be used for most JSON payloads at Target unless there's a reason otherwise.

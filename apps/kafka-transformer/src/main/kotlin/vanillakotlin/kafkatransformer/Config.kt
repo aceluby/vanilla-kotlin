@@ -18,13 +18,9 @@ data class Config(
         val server: HttpServerConfig,
         val client: ClientConfig,
     ) {
-        data class HttpServerConfig(
-            val port: Int,
-        )
+        data class HttpServerConfig(val port: Int)
 
-        data class ClientConfig(
-            val thing: ThingConfig,
-        ) {
+        data class ClientConfig(val thing: ThingConfig) {
             data class ThingConfig(
                 val gateway: ThingGateway.Config,
                 val connection: ConnectionConfig,

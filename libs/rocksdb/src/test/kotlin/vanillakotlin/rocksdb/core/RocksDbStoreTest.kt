@@ -339,4 +339,4 @@ class RocksDbStoreTest {
             assertTrue(expectedValue.contentEquals(retrievedValue))
         }
     }
-} 
+}

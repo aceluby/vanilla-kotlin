@@ -297,10 +297,8 @@ class ClientInitializerTest {
         createMockObservableDoubleGauge()
     }
 
-    private fun createMockObservableDoubleGauge(): ObservableDoubleGauge {
-        return object : ObservableDoubleGauge {
-            override fun close() {}
-        }
+    private fun createMockObservableDoubleGauge(): ObservableDoubleGauge = object : ObservableDoubleGauge {
+        override fun close() {}
     }
 
     private data class MetricCall(
@@ -310,16 +308,12 @@ class ClientInitializerTest {
     )
 
     private class TestInterceptor(private val name: String) : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response {
-            return chain.proceed(chain.request())
-        }
+        override fun intercept(chain: Interceptor.Chain): Response = chain.proceed(chain.request())
 
         override fun toString(): String = "TestInterceptor($name)"
 
-        override fun equals(other: Any?): Boolean {
-            return other is TestInterceptor && other.name == this.name
-        }
+        override fun equals(other: Any?): Boolean = other is TestInterceptor && other.name == this.name
 
         override fun hashCode(): Int = name.hashCode()
     }
-} 
+}

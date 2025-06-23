@@ -134,16 +134,14 @@ class FavoriteThingsEventHandlerTest {
     private fun buildTestMessage(
         username: String = randomUsername(),
         thingIdentifier: String = randomThing(),
-    ): KafkaMessage {
-        return KafkaMessage(
-            broker = randomString(),
-            topic = randomString(),
-            key = "$username:$thingIdentifier",
-            partition = randomInt(1..3),
-            offset = randomLong(),
-            headers = emptyMap(),
-            timestamp = Instant.now().toEpochMilli(),
-            body = mapper.writeValueAsBytes(thingIdentifier),
-        )
-    }
+    ): KafkaMessage = KafkaMessage(
+        broker = randomString(),
+        topic = randomString(),
+        key = "$username:$thingIdentifier",
+        partition = randomInt(1..3),
+        offset = randomLong(),
+        headers = emptyMap(),
+        timestamp = Instant.now().toEpochMilli(),
+        body = mapper.writeValueAsBytes(thingIdentifier),
+    )
 }

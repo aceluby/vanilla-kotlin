@@ -24,13 +24,11 @@ interface FreshFilterable {
             key: ByteArray,
             valueHash: ByteArray?,
             timestamp: Long,
-        ): FreshFilterable {
-            return DefaultFreshFilterable(
-                key = key,
-                valueHash = valueHash ?: nullHash,
-                timestamp = timestamp,
-            )
-        }
+        ): FreshFilterable = DefaultFreshFilterable(
+            key = key,
+            valueHash = valueHash ?: nullHash,
+            timestamp = timestamp,
+        )
     }
 }
 
@@ -46,9 +44,7 @@ enum class FilterStatus {
     REDUNDANT,
 }
 
-class FreshFilter(
-    dataDirectory: String = "/tmp/rocks_db",
-) : AutoCloseable {
+class FreshFilter(dataDirectory: String = "/tmp/rocks_db") : AutoCloseable {
     init {
         File(dataDirectory).deleteRecursively()
         File(dataDirectory).mkdirs()

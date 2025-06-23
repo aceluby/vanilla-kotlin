@@ -340,7 +340,5 @@ class FreshFilterTest {
         key: String,
         hash: ByteArray,
         timestamp: Long,
-    ): FreshFilterable {
-        return FreshFilterable.of(key, hash, timestamp)
-    }
-} 
+    ): FreshFilterable = FreshFilterable.of(key, hash, timestamp)
+}

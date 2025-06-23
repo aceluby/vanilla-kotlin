@@ -98,10 +98,11 @@ enum class CorsMode(val filter: Filter) {
  * forwards unsecured auth headers to the app.  If you aren't using the go-proxy and want your application host to be directly addressable,
  * you would want to set the host to 0.0.0.0. Be sure that none of your endpoints need auth if you do this.
  */
-class Server(val port: Int, val host: String) {
-    fun toServer(http: HttpHandler): Http4kServer {
-        return http.asServer(Undertow(port))
-    }
+class Server(
+    val port: Int,
+    val host: String,
+) {
+    fun toServer(http: HttpHandler): Http4kServer = http.asServer(Undertow(port))
 }
 
 fun Filter.then(filters: List<Filter>): Filter = filters.fold(this) { acc, filter -> acc.then(filter) }

@@ -7,9 +7,7 @@ fun interface WorkerSelector {
 }
 
 class DefaultWorkerSelector(private val numberOfWorkers: Int) : WorkerSelector {
-    override fun selectWorker(key: String?): Int {
-        return key?.hashCode()?.absoluteValue?.rem(numberOfWorkers) ?: 0
-    }
+    override fun selectWorker(key: String?): Int = key?.hashCode()?.absoluteValue?.rem(numberOfWorkers) ?: 0
 }
 
 // this is to be used when receiving null keys in the message

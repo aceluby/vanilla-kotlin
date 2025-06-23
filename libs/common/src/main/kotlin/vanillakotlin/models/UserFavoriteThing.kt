@@ -13,4 +13,4 @@ data class UserFavoriteThing(
     val thingIdentifier: ThingIdentifier,
     @JsonProperty("is_deleted")
     val isDeleted: Boolean = false,
-) 
+)

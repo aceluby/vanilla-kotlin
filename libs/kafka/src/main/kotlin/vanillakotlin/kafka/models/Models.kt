@@ -9,7 +9,11 @@ import java.time.Instant
 typealias Partition = Int
 typealias Offset = Long
 
-data class TopicPartitionOffset(val topic: String, val partition: Int, val offset: Long) {
+data class TopicPartitionOffset(
+    val topic: String,
+    val partition: Int,
+    val offset: Long,
+) {
     fun getTopicPartition() = TopicPartition(topic, partition)
 
     fun getOffsetAndMetadata() = OffsetAndMetadata(offset)

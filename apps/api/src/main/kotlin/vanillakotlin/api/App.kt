@@ -23,7 +23,7 @@ import java.lang.invoke.MethodHandles
 
 private val logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
 
-class App() : VanillaApp {
+class App : VanillaApp {
 
     private val config = loadConfig<Config>()
     private val jdbi = createJdbi(config.db, mapper)

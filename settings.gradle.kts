@@ -15,35 +15,19 @@ include(
     "db-migration",
 )
 
-// pluginManagement {
-//    repositories {
-//        gradlePluginPortal()
-//    }
-// }
-//
-// dependencyResolutionManagement {
-//    @Suppress("UnstableApiUsage")
-//    repositories {
-//        mavenCentral()
-//        mavenLocal()
-//    }
-// }
-
-pluginManagement {
+ pluginManagement {
     repositories {
-        maven(url = "https://binrepo.target.com/artifactory/gradle")
-        maven(url = "https://binrepo.target.com/artifactory/gradle-plugins")
+        gradlePluginPortal()
     }
-}
+ }
 
-dependencyResolutionManagement {
+ dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     repositories {
         mavenLocal()
-        maven("https://binrepo.target.com/artifactory/maven-central")
-        maven("https://binrepo.target.com/artifactory/gradle")
+        mavenCentral()
     }
-}
+ }
 
 // This processing allows us to use the submodule name for submodule build files.
 // Else they all need to be named build.gradle.kts, which is inconvenient when searching for the file

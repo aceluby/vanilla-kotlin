@@ -5,13 +5,11 @@ import vanillakotlin.db.DbConfig
 import vanillakotlin.db.createJdbi
 import vanillakotlin.serde.mapper
 
-fun buildTestDb(): Jdbi {
-    return createJdbi(
-        config = DbConfig(
-            username = "vanilla_kotlin_app",
-            password = "vanilla_kotlin_app",
-            databaseName = "vanilla_kotlin",
-        ),
-        objectMapper = mapper,
-    )
-}
+fun buildTestDb(): Jdbi = createJdbi(
+    config = DbConfig(
+        username = "vanilla_kotlin_app",
+        password = "vanilla_kotlin_app",
+        databaseName = "vanilla_kotlin",
+    ),
+    objectMapper = mapper,
+)

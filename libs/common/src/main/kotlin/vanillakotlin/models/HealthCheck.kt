@@ -20,27 +20,23 @@ data class HealthCheckResponse(
 fun healthCheckAll(
     healthMonitors: List<HealthMonitor>,
     coroutineContext: CoroutineContext = Dispatchers.IO,
-): List<HealthCheckResponse> {
-    return runBlocking(context = coroutineContext) {
-        healthMonitors.map { monitor ->
-            async {
-                try {
-                    monitor.check()
-                } catch (t: Throwable) {
-                    HealthCheckResponse(
-                        name = monitor.name,
-                        isHealthy = false,
-                        details = "${t::class.qualifiedName} - ${t.message}",
-                    )
-                }
+): List<HealthCheckResponse> = runBlocking(context = coroutineContext) {
+    healthMonitors.map { monitor ->
+        async {
+            try {
+                monitor.check()
+            } catch (t: Throwable) {
+                HealthCheckResponse(
+                    name = monitor.name,
+                    isHealthy = false,
+                    details = "${t::class.qualifiedName} - ${t.message}",
+                )
             }
-        }.awaitAll()
-    }
+        }
+    }.awaitAll()
 }
 
 fun allFailedChecks(
     healthMonitors: List<HealthMonitor>,
     coroutineContext: CoroutineContext = Dispatchers.IO,
-): List<HealthCheckResponse> {
-    return healthCheckAll(healthMonitors, coroutineContext).filter { !it.isHealthy }
-}
+): List<HealthCheckResponse> = healthCheckAll(healthMonitors, coroutineContext).filter { !it.isHealthy }

@@ -1,6 +1,8 @@
 # Vanilla Kotlin
 
-A modern, production-ready Kotlin microservices framework built with best practices and enterprise-grade patterns. This project provides a comprehensive set of libraries and applications for building scalable, maintainable services with Kotlin.
+A modern, production-ready microservices development style in Kotlin built with best practices, enterprise-grade
+patterns, and libraries. This project provides an example set of libraries and applications for building scalable,
+maintainable services with Kotlin.
 
 ## 🚀 Features
 
@@ -16,9 +18,9 @@ A modern, production-ready Kotlin microservices framework built with best practi
 
 ### Sample Applications
 
-- **API**: RESTful web service with health checks and OpenAPI documentation
-- **Bulk Inserter**: High-throughput data ingestion service
-- **Kafka Transformer**: Stream processing application for message transformation
+- **API**: RESTful web service with health checks
+- **Bulk Inserter**: High-throughput data ingestion service, storing kafka messages in PostgreSQL
+- **Kafka Transformer**: Stream processing application for message transformation via kafka
 - **Outbox Processor**: Transactional outbox pattern implementation
 
 ## 🏗️ Architecture
@@ -33,7 +35,7 @@ This project follows a modular architecture with:
 
 ## 🛠️ Technology Stack
 
-- **Kotlin** 1.9+ with JVM toolchain 21
+- **Kotlin** 2.1+ with JVM toolchain 21
 - **Gradle** with Kotlin DSL
 - **HTTP4K** for web services
 - **Apache Kafka** for messaging
@@ -80,40 +82,52 @@ This project follows a modular architecture with:
 
 The API will be available at `http://localhost:8080` with health checks at `/health`.
 
+*NOTE: All applications can be run independently using their respective Gradle tasks.*
+
 ## 📚 Module Overview
 
 ### Libraries (`libs/`)
 
 #### Common (`libs/common`)
+
 Core utilities and shared interfaces:
+
 - Application lifecycle interfaces (`VanillaApp`)
 - JSON serialization with Jackson
 - Extension functions and utilities
 - Common data models
 
 #### Database (`libs/db`)
+
 Database access layer:
+
 - JDBI configuration and setup
 - Repository patterns
 - Connection pooling
 - Transaction management
 
 #### HTTP4K (`libs/http4k`)
+
 Web service utilities:
+
 - Server builder DSL
 - Contract-based routing
 - OpenAPI documentation
 - CORS and security filters
 
 #### Kafka (`libs/kafka`)
+
 Messaging infrastructure:
+
 - Type-safe producer and consumer APIs
 - Automatic serialization/deserialization
 - Error handling and retry logic
 - Metrics integration
 
 #### Metrics (`libs/metrics`)
+
 Observability support:
+
 - OpenTelemetry integration
 - Counter, timer, and gauge metrics
 - Standardized metric publishing
@@ -121,34 +135,42 @@ Observability support:
 ### Applications (`apps/`)
 
 #### API (`apps/api`)
+
 RESTful web service providing:
+
 - Item management endpoints
 - Health check endpoints
 - OpenAPI documentation
 - Metrics publishing
 
 #### Bulk Inserter (`apps/bulk-inserter`)
+
 High-throughput data ingestion service for batch processing.
 
 #### Kafka Transformer (`apps/kafka-transformer`)
+
 Stream processing application for transforming messages between Kafka topics.
 
 #### Outbox Processor (`apps/outbox-processor`)
+
 Implementation of the transactional outbox pattern for reliable message publishing.
 
 ## 🧪 Testing
 
 Run all tests:
+
 ```bash
 ./gradlew test
 ```
 
 Run tests for a specific module:
+
 ```bash
 ./gradlew :libs:kafka:test
 ```
 
 The project includes:
+
 - Unit tests with mocking
 - Integration tests with test containers
 - Comprehensive test coverage
@@ -164,8 +186,10 @@ The project includes:
 ### Create distribution
 
 ```bash
-./gradlew :apps:api:installDist
+./gradlew :apps:api:build
 ```
+
+This will create a distribution in `apps/api/build/distributions/api.tar`.
 
 ### Docker
 
@@ -199,7 +223,7 @@ val message = KafkaOutputMessage(
 producer.send(message)
 ```
 
-### Building an HTTP Service
+### Building an HTTP Service with HTTP4K
 
 ```kotlin
 val server = httpServer(port = 8080) {
@@ -208,7 +232,7 @@ val server = httpServer(port = 8080) {
             Response(Status.OK).json(itemService.getAllItems())
         })
     }
-    
+
     healthMonitors {
         add(HealthMonitor("database") { databaseHealthCheck() })
     }
@@ -217,7 +241,7 @@ val server = httpServer(port = 8080) {
 server.start()
 ```
 
-### Database Access
+### Database Access with JDBI
 
 ```kotlin
 class ItemRepository(private val jdbi: Jdbi) {
@@ -236,17 +260,28 @@ class ItemRepository(private val jdbi: Jdbi) {
 Applications use environment-based configuration. Example:
 
 ```kotlin
-data class AppConfig(
-    val database: DatabaseConfig,
-    val kafka: KafkaConfig,
-    val server: ServerConfig
-)
+data class Config(
+    val db: DbConfig,
+    val http: HttpConfig,
+    val metrics: OtelMetrics.Config,
+) {
+    data class HttpConfig(
+        val client: ClientConfig,
+        val server: ServerConfig,
+    ) {
 
-data class DatabaseConfig(
-    val url: String = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432/app",
-    val username: String = System.getenv("DATABASE_USER") ?: "postgres",
-    val password: String = System.getenv("DATABASE_PASSWORD") ?: "password"
-)
+        data class ClientConfig(
+            val thing: ThingGateway.Config,
+            val connectionConfig: ConnectionConfig,
+            val retryConfig: RetryInterceptor.Config,
+        )
+
+        data class ServerConfig(
+            val port: Int,
+            val host: String,
+        )
+    }
+}
 ```
 
 ## 🤝 Contributing
@@ -263,6 +298,7 @@ We welcome contributions! Please see our contributing guidelines:
 ### Code Style
 
 This project uses:
+
 - **Spotless** with **ktlint** for code formatting
 - **Warnings as errors** to maintain code quality
 - **Comprehensive testing** requirements
@@ -306,6 +342,7 @@ SOFTWARE.
 ## 🙏 Acknowledgments
 
 This project builds upon excellent open-source libraries:
+
 - [HTTP4K](https://http4k.org/) for HTTP handling
 - [Apache Kafka](https://kafka.apache.org/) for messaging
 - [JDBI](https://jdbi.org/) for database access

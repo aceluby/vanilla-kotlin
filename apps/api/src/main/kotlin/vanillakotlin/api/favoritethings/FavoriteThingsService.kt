@@ -37,14 +37,12 @@ class FavoriteThingsService(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun saveFavoriteThing(userFavoriteThing: FavoriteThing): SaveResult {
-        return try {
-            upsertFavoriteThing(userFavoriteThing)
-            SaveResult.Success
-        } catch (e: Exception) {
-            logger.warn("Failed to save record", e)
-            SaveResult.Error(SaveErrorType.DATABASE_ERROR)
-        }
+    fun saveFavoriteThing(userFavoriteThing: FavoriteThing): SaveResult = try {
+        upsertFavoriteThing(userFavoriteThing)
+        SaveResult.Success
+    } catch (e: Exception) {
+        logger.warn("Failed to save record", e)
+        SaveResult.Error(SaveErrorType.DATABASE_ERROR)
     }
 
     fun deleteFavoriteThing(thingIdentifier: ThingIdentifier): DeleteResult = try {

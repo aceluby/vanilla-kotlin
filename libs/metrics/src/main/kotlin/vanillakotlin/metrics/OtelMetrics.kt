@@ -22,9 +22,7 @@ class OtelMetrics(
     private val config: Config,
     meterProvider: MeterProvider = GlobalOpenTelemetry.getMeterProvider(),
 ) {
-    data class Config(
-        val tags: Map<String, String>,
-    )
+    data class Config(val tags: Map<String, String>)
 
     companion object {
         const val PROVIDER_NAME = "vanillakotlin.metrics.OtelMetricsPublisher"

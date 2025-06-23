@@ -167,4 +167,4 @@ class ModelsTest {
         assertEquals("item_service-v1.0", telemetryTag.service)
         assertEquals("get/details", telemetryTag.endpoint)
     }
-} 
+}
