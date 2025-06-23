@@ -9,7 +9,6 @@ kasechange = "1.4.1"
 kotest = "5.9.1"
 kotlin-core = "2.1.21"
 kotlin-coroutines = "1.10.2"
-mockk = "1.14.4"
 okhttp = "4.12.0"
 postgresql = "42.7.7"
 resilience4j = "2.3.0"
@@ -35,8 +34,6 @@ http4k-open-api = { module = "org.http4k:http4k-api-openapi", version.ref = "htt
 http4k-format-jackson = { module = "org.http4k:http4k-format-jackson", version.ref = "http4k" }
 http4k-server-undertow = { module = "org.http4k:http4k-server-undertow", version.ref = "http4k" }
 http4k-websocket-client = { module = "org.http4k:http4k-client-websocket", version.ref = "http4k" }
-http4k-contract = { module = "org.http4k:http4k-contract", version.ref = "http4k" }
-http4k-metrics-micrometer = { module = "org.http4k:http4k-metrics-micrometer", version.ref = "http4k" }
 
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8", version.ref = "jackson" }
@@ -60,8 +57,6 @@ kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref 
 kotest-property = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
 
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
-
-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp-mock-server = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
@@ -87,30 +82,37 @@ kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka
 rocksdb = { module = "org.rocksdb:rocksdbjni", version.ref = "rocksdb" }
 
 [bundles]
-hoplite = ["hoplite-core", "hoplite-hocon"]
+hoplite = [
+    "hoplite-core",
+    "hoplite-hocon",
+]
 
 http4k = [
     "http4k-core",
     "http4k-open-api", 
     "http4k-format-jackson",
     "http4k-server-undertow",
-    "http4k-websocket-client"
+    "http4k-websocket-client",
 ]
 
 jackson = [
     "jackson-databind",
     "jackson-jdk8",
     "jackson-jsr310",
-    "jackson-kotlin"
+    "jackson-kotlin",
 ]
 
 jdbi = [
     "jdbi-core",
     "jdbi-kotlin",
-    "jdbi-postgres"
+    "jdbi-postgres",
 ]
 
-jupiter = ["jupiter-api", "jupiter-engine", "jupiter-params"]
+jupiter = [
+    "jupiter-api",
+    "jupiter-engine",
+    "jupiter-params",
+]
 
 testing = [
     "jupiter-api",
@@ -121,14 +123,12 @@ testing = [
     "kotest-property",
     "kotest-assertions-json",
     "kotest-extensions",
-    "mockk"
 ]
 
-okhttp = ["okhttp", "okhttp-mock-server"]
-
-resilience4j = ["resilience4j-timelimiter", "resilience4j-kotlin"]
-
-otel = ["otel-api"]
+resilience4j = [
+    "resilience4j-timelimiter",
+    "resilience4j-kotlin"
+]
 
 otel-testing = [
     "otel-sdk",

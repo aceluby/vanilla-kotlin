@@ -4,6 +4,24 @@ A modern, production-ready microservices development style in Kotlin built with 
 patterns, and libraries. This project provides an example set of libraries and applications for building scalable,
 maintainable services with Kotlin.
 
+## 📖 Philosophy
+
+This project demonstrates a **frameworkless approach** to microservices development. Learn more about why we chose to build without heavy frameworks like Spring Boot and how this approach leads to simpler, more maintainable code:
+
+**➡️ [Read: Vanilla Kotlin - A Frameworkless Approach](docs/vanilla-kotlin.md)**
+
+**➡️ [Read: Functional Injection - Lightweight Dependency Management](docs/functional-injection.md)**
+
+**➡️ [Read: Testing Strategy - Integration vs Unit Testing](docs/testing.md)**
+
+**➡️ [Read: Gradle Setup - Modern Build Configuration](docs/gradle-setup.md)**
+
+**➡️ [Read: Database Guide - Docker, Flyway & JDBI](docs/database-guide.md)**
+
+**➡️ [Read: Server Guide - HTTP4K & Framework Flexibility](docs/server-guide.md)**
+
+**➡️ [Read: Kafka Guide - Consumer, Producer & Actor Pattern Transformer](docs/kafka-guide.md)**
+
 ## 🚀 Features
 
 ### Core Libraries

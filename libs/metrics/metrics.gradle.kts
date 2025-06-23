@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     api(project(":libs:common"))
-    api(libs.bundles.otel)
+    api(libs.otel.api)
 
     testImplementation(testFixtures(project(":libs:common")))
     testImplementation(libs.bundles.otel.testing)

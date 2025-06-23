@@ -1,4 +1,3 @@
-import com.diffplug.gradle.spotless.BaseKotlinExtension.KtlintConfig
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 
 plugins {
@@ -38,30 +37,12 @@ allprojects {
     }
 
     spotless {
-        val configOverride: Map<String, Any> = buildMap {
-            // Force multiline when there are 2 or more parameters for functions
-            put("ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than", 2)
-            // Force multiline for class constructors with 2 or more parameters
-            put("ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than", 2)
-            // Enable parameter list wrapping
-            put("ktlint_standard_parameter-list-wrapping", "enabled")
-            // Disable multiline expression wrapping to allow our custom parameter rules
-            put("ktlint_standard_multiline-expression-wrapping", "disabled")
-            // Enable annotation formatting rule to enforce proper annotation placement
-            put("ktlint_standard_annotation", "enabled")
-            // Disable filename rule as it's not related to annotation formatting
-            put("ktlint_standard_filename", "disabled")
-            // Disable value-argument-comment rule to allow inline comments in argument lists
-            put("ktlint_standard_value-argument-comment", "disabled")
-            // Ensure wrapping is consistent
-            put("ktlint_standard_wrapping", "enabled")
+        kotlin { 
+            ktlint().setEditorConfigPath("${project.rootDir}/.editorconfig")
         }
-        val configure: KtlintConfig.() -> KtlintConfig = {
-            setEditorConfigPath("${project.rootDir}/.editorconfig")
-            editorConfigOverride(configOverride)
+        kotlinGradle { 
+            ktlint().setEditorConfigPath("${project.rootDir}/.editorconfig")
         }
-        kotlin { ktlint().configure() }
-        kotlinGradle { ktlint().configure() }
     }
 }
 
